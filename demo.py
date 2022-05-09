@@ -2,17 +2,31 @@ import pdb
 import transtab
 
 allset, trainset, valset, testset, cat_cols, num_cols, bin_cols \
-     = transtab.load_data('credit-g')
+     = transtab.load_data(['credit-approval', 'credit-g'])
+model, collate_fn = transtab.build_contrastive_learner(cat_cols, num_cols, bin_cols)
+transtab.train(model, allset, collate_fn=collate_fn)
 
+
+# allset, trainset, valset, testset, cat_cols, num_cols, bin_cols \
+#      = transtab.load_data('credit-g')
 # model = transtab.build_classifier(
 #     cat_cols, num_cols, bin_cols,
 # )
+
+# allset, trainset, valset, testset, cat_cols, num_cols, bin_cols \
+#      = transtab.load_data('credit-approval')
+# model.update({'cat':cat_cols,'num':num_cols, 'bin':bin_cols})
+
+# model, collate_fn = transtab.build_contrastive_learner(checkpoint='./ckpt')
+# transtab.train(model, [trainset,valset,testset], collate_fn=collate_fn, **training_arguments)
+
+
+
 
 # model, collate_fn = transtab.build_contrastive_learner(
 #     cat_cols, num_cols, bin_cols,
 # )
 
-model, collate_fn = transtab.build_contrastive_learner(checkpoint='./ckpt')
 
 
 training_arguments = {
@@ -27,7 +41,6 @@ training_arguments = {
     'num_workers':4, # for small dataset (<10000), recommend to set it 0
 }
 
-transtab.train(model, [trainset,valset,testset], collate_fn=collate_fn, **training_arguments)
 
 
 # transtab.train(model, trainset, valset, **training_arguments)
