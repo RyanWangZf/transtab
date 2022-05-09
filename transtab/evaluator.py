@@ -10,14 +10,26 @@ from . import constants
 
 def predict(clf, 
     x_test,
+    y_test=None,
+    return_loss=False,
     eval_batch_size=256,
     ):
+    '''make predictions.
+    Args:
+        x_test: features in pd.DataFrame
+        y_test: labels in pd.Series
+        return_loss: set True will return the loss if y_test is given
+        eval_batch_size: the batch size for inference
+    '''
     clf.eval()
-    pred_list = []
+    pred_list, loss_list = [], []
     for i in range(0, len(x_test), eval_batch_size):
         bs_x_test = x_test.iloc[i:i+eval_batch_size]
         with torch.no_grad():
-            logits, _ = clf(bs_x_test)
+            logits, loss = clf(bs_x_test, y_test)
+        
+        if loss is not None:
+            loss_list.append(loss.item())
         if logits.shape[-1] == 1: # binary classification
             pred_list.append(logits.sigmoid().detach().cpu().numpy())
         else: # multi-class classification
@@ -25,7 +37,12 @@ def predict(clf,
     pred_all = np.concatenate(pred_list, 0)
     if logits.shape[-1] == 1:
         pred_all = pred_all.flatten()
-    return pred_all
+
+    if return_loss:
+        avg_loss = np.mean(loss_list)
+        return avg_loss
+    else:
+        return pred_all
 
 def evaluate(ypred, y_test, seed, metric='auc'):
     np.random.seed(seed)
@@ -57,6 +74,7 @@ def get_eval_metric_fn(eval_metric):
         'acc': acc_fn,
         'auc': auc_fn,
         'mse': mse_fn,
+        'val_loss': None,
     }
     return fn_dict[eval_metric]
 
@@ -70,10 +88,9 @@ def auc_fn(y, p):
 def mse_fn(y, p):
     return mean_squared_error(y, p)
 
-
 class EarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given patience."""
-    def __init__(self, patience=7, verbose=False, delta=0, output_dir='ckpt', trace_func=print):
+    def __init__(self, patience=7, verbose=False, delta=0, output_dir='ckpt', trace_func=print, less_is_better=False):
         """
         Args:
             patience (int): How long to wait after last time validation loss improved.
@@ -85,7 +102,8 @@ class EarlyStopping:
             path (str): Path for the checkpoint to be saved to.
                             Default: 'checkpoint.pt'
             trace_func (function): trace print function.
-                            Default: print            
+                            Default: print     
+            less_is_better (bool): If True (e.g., val loss), the metric is less the better.       
         """
         self.patience = patience
         self.verbose = verbose
@@ -96,11 +114,17 @@ class EarlyStopping:
         self.delta = delta
         self.path = output_dir
         self.trace_func = trace_func
+        self.less_is_better = less_is_better
+
     def __call__(self, val_loss, model):
         if self.patience < 0: # no early stop
             self.early_stop = False
             return
-        score = -val_loss
+        
+        if self.less_is_better:
+            score = val_loss
+        else:    
+            score = -val_loss
         if self.best_score is None:
             self.best_score = score
             self.save_checkpoint(val_loss, model)

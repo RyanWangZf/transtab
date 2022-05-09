@@ -23,7 +23,7 @@ class Trainer:
     def __init__(self,
         model,
         train_set_list,
-        test_set=None,
+        test_set_list=None,
         collate_fn=None,
         output_dir='./ckpt',
         num_epoch=10,
@@ -38,18 +38,23 @@ class Trainer:
         load_best_at_last=True,
         ignore_duplicate_cols=False,
         eval_metric='auc',
+        eval_less_is_better=False,
         num_workers=0,
         **kwargs,
         ):
         '''args:
         train_set_list: a list of training sets [(x_1,y_1),(x_2,y_2),...]
-        test_set: a tuple of test set (x, y), if set None, do not do evaluation and early stopping
+        test_set_list: a list of tuples of test set (x, y), same as train_set_list. if set None, do not do evaluation and early stopping
         patience: the max number of early stop patience
         num_workers: how many workers used to process dataloader. recommend to be 0 if training data smaller than 10000.
+        eval_less_is_better: if the set eval_metric is the less the better. For val_loss, it should be set True.
         '''
         self.model = model
         if isinstance(train_set_list, tuple): train_set_list = [train_set_list]
+        if isinstance(test_set_list, tuple): test_set_list = [test_set_list]
+
         self.train_set_list = train_set_list
+        self.test_set_list = test_set_list
         self.collate_fn = collate_fn
         if collate_fn is None:
             self.collate_fn = SupervisedTrainCollator(
@@ -61,9 +66,12 @@ class Trainer:
         self.trainloader_list = [
             self._build_dataloader(trainset, batch_size, collator=self.collate_fn, num_workers=num_workers) for trainset in train_set_list
         ]
-        self.test_set = test_set
+        self.testloader_list = [
+            self._build_dataloader(testset, eval_batch_size, collator=self.collate_fn, num_workers=num_workers, shuffle=False) for testset in test_set_list
+        ]
+        self.test_set_list = test_set_list
         self.output_dir = output_dir
-        self.early_stopping = EarlyStopping(output_dir=output_dir, patience=patience, verbose=False)
+        self.early_stopping = EarlyStopping(output_dir=output_dir, patience=patience, verbose=False, less_is_better=eval_less_is_better)
         self.args = {
             'lr':lr,
             'weight_decay':weight_decay,
@@ -107,13 +115,10 @@ class Trainer:
                     if self.lr_scheduler is not None:
                         self.lr_scheduler.step()
 
-            if self.test_set is not None:
-                # evaluate in each epoch
-                self.model.eval()
-                x_test, y_test = self.test_set
-                pred_all = predict(self.model, x_test, self.args['eval_batch_size'])
-                eval_res = self.args['eval_metric'](y_test, pred_all)
-                print('epoch: {}, test {}: {}'.format(epoch, self.args['eval_metric_name'], eval_res))
+            if self.test_set_list is not None:
+                eval_res_list = self.evaluate()
+                eval_res = np.mean(eval_res_list)
+                print('epoch: {}, test {}: {:.6f}'.format(epoch, self.args['eval_metric_name'], eval_res))
                 self.early_stopping(-eval_res, self.model)
                 if self.early_stopping.early_stop:
                     print('early stopped')
@@ -121,7 +126,7 @@ class Trainer:
             print('epoch: {}, train loss: {:.4f}, lr: {:.6f}, spent: {:.1f} secs'.format(epoch, train_loss_all, self.optimizer.param_groups[0]['lr'], time.time()-start_time))
         
         if os.path.exists(self.output_dir):
-            if self.test_set is not None:
+            if self.test_set_list is not None:
                 # load checkpoints
                 logger.info(f'load best at last from {self.output_dir}')
                 state_dict = torch.load(os.path.join(self.output_dir, constants.WEIGHTS_NAME), map_location='cpu')
@@ -129,6 +134,39 @@ class Trainer:
             self.save_model(self.output_dir)        
 
         logger.info('training complete, cost {:.1f} secs.'.format(time.time()-start_time))
+
+    def evaluate(self):
+        # evaluate in each epoch
+        self.model.eval()
+        eval_res_list = []
+        for dataindex in range(len(self.testloader_list)):
+            y_test, pred_list, loss_list = [], [], []
+            for data in self.testloader_list[dataindex]:
+                y_test.append(data[1])
+                with torch.no_grad():
+                    logits, loss = self.model(data[0], data[1])
+                if loss is not None:
+                    loss_list.append(loss.item())
+                if logits is not None:
+                    if logits.shape[-1] == 1: # binary classification
+                        pred_list.append(logits.sigmoid().detach().cpu().numpy())
+                    else: # multi-class classification
+                        pred_list.append(torch.softmax(logits,-1).detach().cpu().numpy())
+            
+            if len(pred_list)>0:
+                pred_all = np.concatenate(pred_list, 0)
+                if logits.shape[-1] == 1:
+                    pred_all = pred_all.flatten()
+            
+            if self.args['eval_metric_name'] == 'val_loss':
+                eval_res = np.mean(loss_list)
+            else:
+                y_test = pd.concat(y_test, 0)
+                eval_res = self.args['eval_metric'](y_test, pred_all)
+                
+            eval_res_list.append(eval_res)
+
+        return eval_res_list
 
     def train_no_dataloader(self,
         resume_from_checkpoint = None,
@@ -255,12 +293,12 @@ class Trainer:
         )
         return warmup_steps
 
-    def _build_dataloader(self, trainset, batch_size, collator, num_workers=8):
+    def _build_dataloader(self, trainset, batch_size, collator, num_workers=8, shuffle=True):
         trainloader = DataLoader(
             TrainDataset(trainset), 
             collate_fn=collator,
             batch_size=batch_size, 
-            shuffle=True,
+            shuffle=shuffle,
             num_workers=num_workers,
             pin_memory=True,
             drop_last=False,

@@ -169,6 +169,7 @@ def train(model,
     balance_sample=False,
     load_best_at_last=True,
     ignore_duplicate_cols=False,
+    eval_less_is_better=False,
     ):
     '''Args:
     model: TransTab based model
@@ -189,6 +190,7 @@ def train(model,
     balance_sample: whether or not do bootstrapping to maintain in batch samples are in balanced classes, only support binary classification,
     load_best_at_last: whether or not load the best checkpoint after the training completes,
     ignore_duplicate_cols: whether or not ignore the contradictory of cat/num/bin cols
+    eval_less_is_better: if the set eval_metric is the less the better. For val_loss, it should be set True.
     '''
     if isinstance(trainset, tuple): trainset = [trainset]
 
@@ -208,6 +210,7 @@ def train(model,
         'balance_sample':balance_sample,
         'load_best_at_last':load_best_at_last,
         'ignore_duplicate_cols':ignore_duplicate_cols,
+        'eval_less_is_better':eval_less_is_better,
     }
     trainer = Trainer(
         model,
@@ -216,15 +219,3 @@ def train(model,
         **train_args,
     )
     trainer.train()
-
-# transtab.train(model, data, hyperparameters)
-# transtab.evaluate(model, data)
-# transtab.predict(model, data)
-
-# import transtab
-# dataset=transtab.load_data(dataname)
-# model=transtab.build_classifier(**param)
-# model=transtab.build_regressor(**param)
-# model=transtab.build_survival_predictor(**param)
-# inputs=process(pd.DataFrame)
-
