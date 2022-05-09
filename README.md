@@ -14,6 +14,10 @@ model = transtab.build_classifier(cat_cols, num_cols, bin_cols)
 
 # start training
 transtab.train(model, trainset, valset, **training_arguments)
+
+# make predictions, df_x is a pd.DataFrame with shape (n, d)
+# return the predictions ypred with shape (n, 1) if binary classification; (n, n_class) if multiclass classification.
+ypred = transtab.predict(model, df_x)
 ```
 
 It's easy, isn't it?
@@ -39,7 +43,7 @@ transtab.train(model, trainset, valset, **training_arguments)
 
 ## 🔥 Contrastive pretraining on multiple tables
 
-We can also conduct contrastive pretraining on multiple distict tables like
+We can also conduct contrastive pretraining on multiple distinct tables like
 
 ```python
 # load from multiple tabular datasets
