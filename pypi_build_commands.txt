@@ -1,0 +1,11 @@
+# This is a command list for building pypi packages
+
+python setup.py sdist bdist_wheel
+
+twine check dist/*
+
+# upload to pypi-test
+python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
+# upload to pypi
+twine upload dist/*
