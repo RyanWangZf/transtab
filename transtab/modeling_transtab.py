@@ -95,6 +95,7 @@ class TransTabFeatureExtractor:
         self.categorical_columns = categorical_columns
         self.numerical_columns = numerical_columns
         self.binary_columns = binary_columns
+        self.ignore_duplicate_cols = ignore_duplicate_cols
 
         if categorical_columns is not None:
             self.categorical_columns = list(set(categorical_columns))
@@ -105,7 +106,7 @@ class TransTabFeatureExtractor:
 
         # check if column exists overlap
         col_no_overlap, duplicate_cols = self._check_column_overlap(self.categorical_columns, self.numerical_columns, self.binary_columns)
-        if not ignore_duplicate_cols:
+        if not self.ignore_duplicate_cols:
             for col in duplicate_cols:
                 logger.error(f'Find duplicate cols named `{col}`, please process the raw data or set `ignore_duplicate_cols` to True!')
             assert col_no_overlap, 'The assigned categorical_columns, numerical_columns, binary_columns should not have overlap! Please check your input.'
@@ -214,6 +215,29 @@ class TransTabFeatureExtractor:
         self.numerical_columns = col_type_dict['numerical']
         self.binary_columns = col_type_dict['binary']
         logger.info(f'load feature extractor from {coltype_path}')
+
+    def update(self, cat=None, num=None, bin=None):
+        '''update cat/num/bin column maps.
+        '''
+        if cat is not None:
+            self.categorical_columns.extend(cat)
+            self.categorical_columns = list(set(self.categorical_columns))
+
+        if num is not None:
+            self.numerical_columns.extend(num)
+            self.numerical_columns = list(set(self.numerical_columns))
+
+        if bin is not None:
+            self.binary_columns.extend(bin)
+            self.binary_columns = list(set(self.binary_columns))
+        
+        col_no_overlap, duplicate_cols = self._check_column_overlap(self.categorical_columns, self.numerical_columns, self.binary_columns)
+        if not self.ignore_duplicate_cols:
+            for col in duplicate_cols:
+                logger.error(f'Find duplicate cols named `{col}`, please process the raw data or set `ignore_duplicate_cols` to True!')
+            assert col_no_overlap, 'The assigned categorical_columns, numerical_columns, binary_columns should not have overlap! Please check your input.'
+        else:
+            self._solve_duplicate_cols(duplicate_cols)
 
     def _check_column_overlap(self, cat_cols=None, num_cols=None, bin_cols=None):
         all_cols = []
@@ -609,6 +633,13 @@ class TransTabModel(nn.Module):
         torch.save(state_dict, os.path.join(ckpt_dir, constants.WEIGHTS_NAME))
         if self.feature_extractor is not None:
             self.feature_extractor.save(ckpt_dir)
+        
+    def update(self, col_map):
+        '''update feature extractor's column map for cat/num/bin cols.
+        Args:
+            col_map: a dict of column maps {'cat':[], 'num':[], 'bin':[],}
+        '''
+        self.feature_extractor.update(**col_map)
 
     def _check_column_overlap(self, cat_cols=None, num_cols=None, bin_cols=None):
         all_cols = []
