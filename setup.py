@@ -13,7 +13,7 @@ with open(os.path.join(this_directory, 'requirements.txt'),
 
 setuptools.setup(
     name = 'transtab',
-    version = '0.0.2a',
+    version = '0.0.2c',
     author = 'Zifeng Wang',
     author_email = 'zifengw2@illinois.edu',
     description = 'A flexible tabular prediction model that handles heterogeneous input tables.',
@@ -25,6 +25,9 @@ setuptools.setup(
     install_requires=requirements,
     classifiers=[
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
     ],

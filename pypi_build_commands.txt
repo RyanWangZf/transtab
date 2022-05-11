@@ -8,7 +8,7 @@ twine check dist/*
 python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
 # install from test-pypi
-pip install --index-url https://test.pypi.org/simple/ transtab==0.0.2a
+pip install --index-url https://test.pypi.org/simple/ transtab==0.0.2c
 
 # upload to pypi
 twine upload dist/*
