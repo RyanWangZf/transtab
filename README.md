@@ -25,7 +25,7 @@ It's easy, isn't it?
 
 
 
-## 🔥 Transfer learning across tables
+## Transfer learning across tables
 
 A novel feature of `transtab` is its ability to learn from multiple distinct tables. It is easy to trigger the training like
 
@@ -46,7 +46,7 @@ transtab.train(model, trainset, valset, **training_arguments)
 
 
 
-## 🔥 Contrastive pretraining on multiple tables
+## Contrastive pretraining on multiple tables
 
 We can also conduct contrastive pretraining on multiple distinct tables like
 
@@ -66,9 +66,9 @@ transtab.train(model, trainset, valset, collate_fn=collate_fn, **training_argume
 
 
 
-## 🔥 Citation
+## Citation
 
-If you find this package useful, please consider citing the following paper 🤗:
+If you find this package useful, please consider citing the following paper:
 
 ```latex
 @article{wang2022transtab,
