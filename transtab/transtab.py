@@ -8,6 +8,7 @@ from .dataset import load_data
 from .evaluator import predict, evaluate
 from .trainer import Trainer
 from .trainer_utils import TransTabCollatorForCL
+from .trainer_utils import random_seed
 
 def build_classifier(
     categorical_columns=None,
@@ -83,7 +84,7 @@ def build_contrastive_learner(
     numerical_columns=None,
     binary_columns=None,
     projection_dim=128,
-    num_partition=2,
+    num_partition=3,
     overlap_ratio=0.5,
     supervised=True,
     hidden_dim=128,

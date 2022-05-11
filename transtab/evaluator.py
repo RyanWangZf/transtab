@@ -44,7 +44,7 @@ def predict(clf,
     else:
         return pred_all
 
-def evaluate(ypred, y_test, seed, metric='auc'):
+def evaluate(ypred, y_test, metric='auc', seed=123):
     np.random.seed(seed)
     eval_fn = get_eval_metric_fn(metric)
     auc_list = []

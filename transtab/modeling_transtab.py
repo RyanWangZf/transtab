@@ -246,7 +246,7 @@ class TransTabFeatureExtractor:
         if bin_cols is not None: all_cols.extend(bin_cols)
         org_length = len(all_cols)
         if org_length == 0:
-            logger.warning('No cat/num/bin cols specified, will take ALL columns as categorical!!')
+            logger.warning('No cat/num/bin cols specified, will take ALL columns as categorical! Ignore this warning if you specify the `checkpoint` to load the model.')
             return True, []
         unq_length = len(list(set(all_cols)))
         duplicate_cols = [item for item, count in collections.Counter(all_cols).items() if count > 1]
@@ -523,6 +523,7 @@ class TransTabCLSToken(nn.Module):
         super().__init__()
         self.weight = nn.Parameter(Tensor(hidden_dim))
         nn_init.uniform_(self.weight, a=-1/math.sqrt(hidden_dim),b=1/math.sqrt(hidden_dim))
+        self.hidden_dim = hidden_dim
 
     def expand(self, *leading_dimensions):
         new_dims = (1,) * (len(leading_dimensions)-1)
@@ -634,12 +635,23 @@ class TransTabModel(nn.Module):
         if self.feature_extractor is not None:
             self.feature_extractor.save(ckpt_dir)
         
-    def update(self, col_map):
+    def update(self, config):
         '''update feature extractor's column map for cat/num/bin cols.
         Args:
-            col_map: a dict of column maps {'cat':[], 'num':[], 'bin':[],}
+            config: a dict of configurations
+                {'cat':[], 'num':[], 'bin':[]} are to specify the new column names
+                {'num_class': } is to specify the number of classes for finetuning on a new dataset
         '''
+        col_map = {}
+        for k,v in config.items():
+            if k in ['cat','num','bin']: col_map[k] = v
         self.feature_extractor.update(**col_map)
+
+        if 'num_class' in config:
+            num_class = config['num_class']
+            self.clf = TransTabLinearClassifier(num_class, hidden_dim=self.cls_token.hidden_dim)
+            self.clf.to(self.device)
+            logger.info(f'Build a new classifier with num {num_class} classes outputs, need further finetune to work.')
 
     def _check_column_overlap(self, cat_cols=None, num_cols=None, bin_cols=None):
         all_cols = []

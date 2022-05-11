@@ -1,8 +1,11 @@
 import pdb
+import os
+import random
 import math
 
 import numpy as np
 import pandas as pd
+import torch
 from torch.utils.data import Dataset, DataLoader
 
 from .modeling_transtab import TransTabFeatureExtractor
@@ -137,8 +140,6 @@ class TransTabCollatorForCL(TrainCollator):
         sub_x_list.append(pd.concat([x.copy().drop(corrupt_cols,axis=1), x_corrupt], axis=1))
         return sub_x_list
 
-
-
 def get_parameter_names(model, forbidden_layer_types):
     """
     Returns the names of the model parameters that are not inside a forbidden layer.
@@ -153,3 +154,9 @@ def get_parameter_names(model, forbidden_layer_types):
     # Add model specific parameters (defined with nn.Parameter) since they are not in any child.
     result += list(model._parameters.keys())
     return result
+
+def random_seed(seed):
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
