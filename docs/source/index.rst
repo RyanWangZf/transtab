@@ -35,6 +35,11 @@ The basic usage of `transtab` can be done in a couple of lines:
 
 It's easy, isn't it?
 
+Let's start the journey from the `installation <https://transtab.readthedocs.io/en/latest/installation.html>`_ and the `first demo on supervised tabular learning <https://transtab.readthedocs.io/en/latest/fast_train.html>`_ !
+
+We also provide the examples on `tabular transfer learning <https://transtab.readthedocs.io/en/latest/example_transfer.html>`_ and `tabular pretraining <https://transtab.readthedocs.io/en/latest/example_pretrain.html>`_ for the quick start.
+
+----
 
 **Citing transtab**:
 
@@ -47,7 +52,6 @@ If you use `transtab` in a scientific publication, we would appreciate citations
     }
 
 
-----
 
 .. toctree::
    :maxdepth: 2
@@ -56,7 +60,9 @@ If you use `transtab` in a scientific publication, we would appreciate citations
 
    install
    fast_train
-   example
+   example_transfer
+   example_pretrain
+   data_preparation
 
 .. toctree::
     :maxdepth: 2
@@ -64,3 +70,10 @@ If you use `transtab` in a scientific publication, we would appreciate citations
     :caption: Documentation
 
     api_cc
+
+.. toctree::
+    :maxdepth: 2
+    :hidden:
+    :caption: Additional Information
+
+    about
