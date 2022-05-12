@@ -68,7 +68,8 @@ If you use `transtab` in a scientific publication, we would appreciate citations
     :maxdepth: 2
     :hidden:
     :caption: Documentation
-
+    
+    models
     api_cc
 
 .. toctree::

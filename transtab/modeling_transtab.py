@@ -538,7 +538,48 @@ class TransTabCLSToken(nn.Module):
         return outputs
 
 class TransTabModel(nn.Module):
-    r'''The base transtab model for downstream tasks like contrastive learning, binary classification, etc.
+    '''The base transtab model for downstream tasks like contrastive learning, binary classification, etc.
+
+    Parameters
+    ----------
+
+    categorical_columns: list 
+        a list of categorical feature names.
+
+    numerical_columns: list
+        a list of numerical feature names.
+
+    binary_columns: list
+        a list of yes or no binary feature names, accept binary indicators like (yes,no); (true,false); (0,1).
+    
+    feature_extractor: TransTabFeatureExtractor
+        a feature extractor to tokenize the input tables. if not passed the model will build itself.
+    
+    hidden_dim: int
+        the dimension of hidden embeddings
+    
+    num_layer: int
+        the number of transformer layers used in the encoder.
+    
+    num_attention_head: int
+        the numebr of heads of multihead self-attention layer in the transformers
+
+    hidden_dropout_prob: float
+        the dropout ratio in the transformer encoder
+
+    ffn_dim: int
+        the dimension of feed-forward layer in the transformer layer
+    
+    activation: str
+        the name of used activation functions, support ``"relu"``, ``"gelu"``, ``"selu"``, ``"leakyrelu"`` .
+    
+    device: str
+        the device, ``"cpu"`` or ``"cuda:0"``
+
+    Returns
+    -------
+    A TransTabModel model.
+    
     '''
     base_model_prefix = 'transtab'
     def __init__(self,
@@ -555,12 +596,6 @@ class TransTabModel(nn.Module):
         device='cuda:0',
         **kwargs,
         ) -> None:
-        '''args:
-            categorical_columns: a list of categorical features
-            numerical_columns: a list of numerical features
-            binary_columns: a list of yes or no feature names, accept binary indicators like
-                (yes,no); (true,false); (0,1).
-        '''
         super().__init__()
         self.categorical_columns=categorical_columns
         self.numerical_columns=numerical_columns
@@ -637,10 +672,17 @@ class TransTabModel(nn.Module):
         
     def update(self, config):
         '''update feature extractor's column map for cat/num/bin cols.
-        Args:
-            config: a dict of configurations
-                {'cat':[], 'num':[], 'bin':[]} are to specify the new column names
-                {'num_class': } is to specify the number of classes for finetuning on a new dataset
+
+        Parameters
+        ----------
+
+        config: dict
+            a dict of configurations: keys 'cat':[], 'num':[], 'bin':[] are to specify the new column names;
+            key 'num_class':int is to specify the number of classes for finetuning on a new dataset.
+
+        Returns:
+        --------
+        None
         '''
         col_map = {}
         for k,v in config.items():
