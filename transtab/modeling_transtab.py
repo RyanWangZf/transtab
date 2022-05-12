@@ -539,10 +539,11 @@ class TransTabCLSToken(nn.Module):
 
 class TransTabModel(nn.Module):
     '''The base transtab model for downstream tasks like contrastive learning, binary classification, etc.
+    All models subclass this basemodel and usually rewrite the ``forward`` function. Refer to the source code of
+    :class:`transtab.modeling_transtab.TransTabClassifier` or :class:`transtab.modeling_transtab.TransTabForCL` for the implementation details.
 
     Parameters
     ----------
-
     categorical_columns: list 
         a list of categorical feature names.
 
@@ -550,38 +551,38 @@ class TransTabModel(nn.Module):
         a list of numerical feature names.
 
     binary_columns: list
-        a list of yes or no binary feature names, accept binary indicators like (yes,no); (true,false); (0,1).
+        a list of binary feature names, accept binary indicators like (yes,no); (true,false); (0,1).
     
     feature_extractor: TransTabFeatureExtractor
         a feature extractor to tokenize the input tables. if not passed the model will build itself.
     
     hidden_dim: int
-        the dimension of hidden embeddings
+        the dimension of hidden embeddings.
     
     num_layer: int
         the number of transformer layers used in the encoder.
     
     num_attention_head: int
-        the numebr of heads of multihead self-attention layer in the transformers
+        the numebr of heads of multihead self-attention layer in the transformers.
 
     hidden_dropout_prob: float
-        the dropout ratio in the transformer encoder
+        the dropout ratio in the transformer encoder.
 
     ffn_dim: int
-        the dimension of feed-forward layer in the transformer layer
+        the dimension of feed-forward layer in the transformer layer.
     
     activation: str
-        the name of used activation functions, support ``"relu"``, ``"gelu"``, ``"selu"``, ``"leakyrelu"`` .
+        the name of used activation functions, support ``"relu"``, ``"gelu"``, ``"selu"``, ``"leakyrelu"``.
     
     device: str
-        the device, ``"cpu"`` or ``"cuda:0"``
+        the device, ``"cpu"`` or ``"cuda:0"``.
 
     Returns
     -------
     A TransTabModel model.
     
     '''
-    base_model_prefix = 'transtab'
+
     def __init__(self,
         categorical_columns=None,
         numerical_columns=None,
@@ -589,13 +590,14 @@ class TransTabModel(nn.Module):
         feature_extractor=None,
         hidden_dim=128,
         num_layer=2,
-        num_attention_head=2,
+        num_attention_head=8,
         hidden_dropout_prob=0.1,
         ffn_dim=256,
         activation='relu',
         device='cuda:0',
         **kwargs,
         ) -> None:
+
         super().__init__()
         self.categorical_columns=categorical_columns
         self.numerical_columns=numerical_columns
@@ -639,6 +641,23 @@ class TransTabModel(nn.Module):
         self.to(device)
     
     def forward(self, x, y=None):
+        '''Extract the embeddings based on input tables.
+
+        Parameters
+        ----------
+        x: pd.DataFrame
+            a batch of samples stored in pd.DataFrame.
+        
+        y: pd.Series
+            the corresponding labels for each sample in ``x``. ignored for the basemodel.
+        
+        Returns
+        -------
+        final_cls_embedding: torch.Tensor
+            the [CLS] embedding at the end of transformer encoder.
+
+        '''
+
         inputs = self.feature_extractor(x)
         outputs = self.feature_processor(**inputs)
         outputs = self.cls_token(**outputs)
@@ -651,6 +670,19 @@ class TransTabModel(nn.Module):
         return final_cls_embedding
 
     def load(self, ckpt_dir):
+        '''Load the model state_dict and feature_extractor configuration
+        from the ``ckpt_dir``.
+
+        Parameters
+        ----------
+        ckpt_dir: str
+            the directory path to load.
+
+        Returns
+        -------
+        None
+
+        '''
         # load model weight state dict
         model_name = os.path.join(ckpt_dir, constants.WEIGHTS_NAME)
         state_dict = torch.load(model_name, map_location='cpu')
@@ -663,30 +695,48 @@ class TransTabModel(nn.Module):
         self.feature_extractor.load(os.path.join(ckpt_dir, constants.EXTRACTOR_STATE_DIR))
 
     def save(self, ckpt_dir):
+        '''Save the model state_dict and feature_extractor configuration
+        to the ``ckpt_dir``.
+
+        Parameters
+        ----------
+        ckpt_dir: str
+            the directory path to save.
+
+        Returns
+        -------
+        None
+
+        '''
         # save model weight state dict
         if not os.path.exists(ckpt_dir): os.makedirs(ckpt_dir, exist_ok=True)
         state_dict = self.state_dict()
         torch.save(state_dict, os.path.join(ckpt_dir, constants.WEIGHTS_NAME))
         if self.feature_extractor is not None:
             self.feature_extractor.save(ckpt_dir)
+
+        return None
         
     def update(self, config):
-        '''update feature extractor's column map for cat/num/bin cols.
+        '''Update the configuration of feature extractor's column map for cat, num, and bin cols. 
+        Or update the number of classes for the output classifier layer.
 
         Parameters
         ----------
-
         config: dict
-            a dict of configurations: keys 'cat':[], 'num':[], 'bin':[] are to specify the new column names;
-            key 'num_class':int is to specify the number of classes for finetuning on a new dataset.
+            a dict of configurations: keys cat:list, num:list, bin:list are to specify the new column names; 
+            key num_class:int is to specify the number of classes for finetuning on a new dataset.
 
-        Returns:
-        --------
+        Returns
+        -------
         None
+
         '''
+
         col_map = {}
         for k,v in config.items():
             if k in ['cat','num','bin']: col_map[k] = v
+
         self.feature_extractor.update(**col_map)
 
         if 'num_class' in config:
@@ -694,6 +744,8 @@ class TransTabModel(nn.Module):
             self.clf = TransTabLinearClassifier(num_class, hidden_dim=self.cls_token.hidden_dim)
             self.clf.to(self.device)
             logger.info(f'Build a new classifier with num {num_class} classes outputs, need further finetune to work.')
+
+        return None
 
     def _check_column_overlap(self, cat_cols=None, num_cols=None, bin_cols=None):
         all_cols = []
@@ -718,14 +770,58 @@ class TransTabModel(nn.Module):
                 self.binary_columns.remove(col)
                 self.binary_columns.append(f'[bin]{col}')
 
+
 class TransTabClassifier(TransTabModel):
-    r'''
-    Classifier based on transtab encoder.
+    '''The classifier model subclass from :class:`transtab.modeling_transtab.TransTabModel`.
+
+    Parameters
+    ----------
+    categorical_columns: list 
+        a list of categorical feature names.
+
+    numerical_columns: list
+        a list of numerical feature names.
+
+    binary_columns: list
+        a list of binary feature names, accept binary indicators like (yes,no); (true,false); (0,1).
+    
+    feature_extractor: TransTabFeatureExtractor
+        a feature extractor to tokenize the input tables. if not passed the model will build itself.
+
+    num_class: int
+        number of output classes to be predicted.
+
+    hidden_dim: int
+        the dimension of hidden embeddings.
+    
+    num_layer: int
+        the number of transformer layers used in the encoder.
+    
+    num_attention_head: int
+        the numebr of heads of multihead self-attention layer in the transformers.
+
+    hidden_dropout_prob: float
+        the dropout ratio in the transformer encoder.
+
+    ffn_dim: int
+        the dimension of feed-forward layer in the transformer layer.
+    
+    activation: str
+        the name of used activation functions, support ``"relu"``, ``"gelu"``, ``"selu"``, ``"leakyrelu"``.
+    
+    device: str
+        the device, ``"cpu"`` or ``"cuda:0"``.
+
+    Returns
+    -------
+    A TransTabClassifier model.
+    
     '''
     def __init__(self,
         categorical_columns=None,
         numerical_columns=None,
         binary_columns=None,
+        feature_extractor=None,
         num_class=2,
         hidden_dim=128,
         num_layer=2,
@@ -736,14 +832,11 @@ class TransTabClassifier(TransTabModel):
         device='cuda:0',
         **kwargs,
         ) -> None:
-        '''args:
-            categorical_columns: a list of categorical features
-            numerical_columns: a list of numerical features
-        '''
         super().__init__(
             categorical_columns=categorical_columns,
             numerical_columns=numerical_columns,
             binary_columns=binary_columns,
+            feature_extractor=feature_extractor,
             hidden_dim=hidden_dim,
             num_layer=num_layer,
             num_attention_head=num_attention_head,
@@ -762,10 +855,25 @@ class TransTabClassifier(TransTabModel):
         self.to(device)
 
     def forward(self, x, y=None):
-        '''Do forward pass taking inputs.
-        Args:
-            x: should be either Dict or pd.DataFrame. 
-            When type(x)==dict, it is the output of TransTabFeatureExtractor.
+        '''Make forward pass given the input feature ``x`` and label ``y`` (optional).
+        
+        Parameters
+        ----------
+        x: pd.DataFrame or dict
+            pd.DataFrame: a batch of raw tabular samples; dict: the output of TransTabFeatureExtractor.
+        
+        y: pd.Series
+            the corresponding labels for each sample in ``x``. if label is given, the model will return
+            the classification loss by ``self.loss_fn``.
+        
+        Returns
+        -------
+        logits: torch.Tensor
+            the [CLS] embedding at the end of transformer encoder.
+
+        loss: torch.Tensor or None
+            the classification loss. 
+
         '''
         if isinstance(x, dict):
             # input is the pre-tokenized encoded inputs
@@ -800,16 +908,74 @@ class TransTabClassifier(TransTabModel):
         return logits, loss
 
 class TransTabForCL(TransTabModel):
-    r'''
-    Do contrastive learning for transtab model.
+    '''The contrasstive learning model subclass from :class:`transtab.modeling_transtab.TransTabModel`.
+
+    Parameters
+    ----------
+    categorical_columns: list 
+        a list of categorical feature names.
+
+    numerical_columns: list
+        a list of numerical feature names.
+
+    binary_columns: list
+        a list of binary feature names, accept binary indicators like (yes,no); (true,false); (0,1).
+    
+    feature_extractor: TransTabFeatureExtractor
+        a feature extractor to tokenize the input tables. if not passed the model will build itself.
+
+    hidden_dim: int
+        the dimension of hidden embeddings.
+    
+    num_layer: int
+        the number of transformer layers used in the encoder.
+    
+    num_attention_head: int
+        the numebr of heads of multihead self-attention layer in the transformers.
+
+    hidden_dropout_prob: float
+        the dropout ratio in the transformer encoder.
+
+    ffn_dim: int
+        the dimension of feed-forward layer in the transformer layer.
+    
+    projection_dim: int
+        the dimension of projection head on the top of encoder.
+    
+    overlap_ratio: float
+        the overlap ratio of columns of different partitions when doing subsetting.
+    
+    num_partition: int
+        the number of partitions made for vertical-partition contrastive learning.
+
+    supervised: bool
+        whether or not to take supervised VPCL, otherwise take self-supervised VPCL.
+    
+    temperature: float
+        temperature used to compute logits for contrastive learning.
+
+    base_temperature: float
+        base temperature used to normalize the temperature.
+    
+    activation: str
+        the name of used activation functions, support ``"relu"``, ``"gelu"``, ``"selu"``, ``"leakyrelu"``.
+    
+    device: str
+        the device, ``"cpu"`` or ``"cuda:0"``.
+
+    Returns
+    -------
+    A TransTabForCL model.
+    
     '''
     def __init__(self,
         categorical_columns=None,
         numerical_columns=None,
         binary_columns=None,
+        feature_extractor=None,
         hidden_dim=128,
         num_layer=2,
-        num_attention_head=2,
+        num_attention_head=8,
         hidden_dropout_prob=0,
         ffn_dim=256,
         projection_dim=128,
@@ -822,16 +988,11 @@ class TransTabForCL(TransTabModel):
         device='cuda:0',
         **kwargs,
         ) -> None:
-        '''args:
-        overlap_ratio: the column overlap ratio for building positive pairs in contrastive learning
-        num_partition: number of subsets we need to do multiview CL
-        temperature: to scale the computed scores
-        supervised: set True, take supervised CL; set False, take Self-supervised CL.
-        '''
         super().__init__(
             categorical_columns=categorical_columns,
             numerical_columns=numerical_columns,
             binary_columns=binary_columns,
+            feature_extractor=feature_extractor,
             hidden_dim=hidden_dim,
             num_layer=num_layer,
             num_attention_head=num_attention_head,
@@ -855,10 +1016,25 @@ class TransTabForCL(TransTabModel):
         self.to(device)
 
     def forward(self, x, y=None):
-        '''do forward pass to compute contrastive loss,
-        args:
-            x: input pd.DataFrame or pretokenized dict['input_sub_x']
-            y: used if set supervised = 1
+        '''Make forward pass given the input feature ``x`` and label ``y`` (optional).
+        
+        Parameters
+        ----------
+        x: pd.DataFrame or dict
+            pd.DataFrame: a batch of raw tabular samples; dict: the output of TransTabFeatureExtractor.
+        
+        y: pd.Series
+            the corresponding labels for each sample in ``x``. if label is given, the model will return
+            the classification loss by ``self.loss_fn``.
+        
+        Returns
+        -------
+        logits: None
+            this CL model does NOT return logits.
+
+        loss: torch.Tensor
+            the supervised or self-supervised VPCL loss.
+
         '''
         # do positive sampling
         feat_x_list = []
@@ -912,10 +1088,6 @@ class TransTabForCL(TransTabModel):
         return sub_x_list
 
     def cos_sim(self, a, b):
-        """
-        Computes the cosine similarity cos_sim(a[i], b[j]) for all i and j.
-        :return: Matrix with res[i][j]  = cos_sim(a[i], b[j])
-        """
         if not isinstance(a, torch.Tensor):
             a = torch.tensor(a)
 
@@ -933,6 +1105,18 @@ class TransTabForCL(TransTabModel):
         return torch.mm(a_norm, b_norm.transpose(0, 1))
 
     def self_supervised_contrastive_loss(self, features):
+        '''Compute the self-supervised VPCL loss.
+
+        Parameters
+        ----------
+        features: torch.Tensor
+            the encoded features of multiple partitions of input tables, with shape ``(bs, n_partition, proj_dim)``.
+
+        Returns
+        -------
+        loss: torch.Tensor
+            the computed self-supervised VPCL loss.
+        '''
         batch_size = features.shape[0]
         labels = torch.arange(batch_size, dtype=torch.long, device=self.device).view(-1,1)
         mask = torch.eq(labels, labels.T).float().to(labels.device)
@@ -958,9 +1142,21 @@ class TransTabForCL(TransTabModel):
         return loss
 
     def supervised_contrastive_loss(self, features, labels):
-        '''args:
-        features: multi-view features (bs, n_view, emb_dim)
-        labels: ordinal labels (bs, )
+        '''Compute the supervised VPCL loss.
+
+        Parameters
+        ----------
+        features: torch.Tensor
+            the encoded features of multiple partitions of input tables, with shape ``(bs, n_partition, proj_dim)``.
+
+        labels: torch.Tensor
+            the class labels to be used for building positive/negative pairs in VPCL.
+        
+        Returns
+        -------
+        loss: torch.Tensor
+            the computed VPCL loss.
+
         '''
         labels = labels.contiguous().view(-1,1)
         batch_size = features.shape[0]
