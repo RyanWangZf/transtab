@@ -1,0 +1,4 @@
+predict
+=======
+
+.. autofunction:: transtab.predict

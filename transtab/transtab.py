@@ -14,6 +14,7 @@ def build_classifier(
     categorical_columns=None,
     numerical_columns=None,
     binary_columns=None,
+    feature_extractor=None,
     num_class=2,
     hidden_dim=128,
     num_layer=2,
@@ -24,26 +25,59 @@ def build_classifier(
     device='cuda:0',
     checkpoint=None,
     **kwargs) -> TransTabClassifier:
-    '''Build a classifier based on TransTab.
-    [Warning] If no cat/num/bin specified, the model takes ALL as categorical columns,
-    which may undermine the performance significantly.
-    Args:
-        categorical_columns: a list of categorical features
-        numerical_columns: a list of numerical features
-        binary_columns: a list of yes or no feature names, accept binary indicators like
-            (yes,no); (true,false); (0,1).
-        num_class: number of classes for classification
-        hidden_dim: dimension of embedding and transformer layer
-        num_attention_head: number of attention heads of transformer layer
-        ffn_dim: dimension of feedforward layer in transformer
-        activation: activation function used
-        device: specify the device of the classifier model
-        checkpoint: directory of the pretrained transtab model.
+    '''Build a :class:`transtab.modeling_transtab.TransTabClassifier`.
+
+    Parameters
+    ----------
+    categorical_columns: list 
+        a list of categorical feature names.
+
+    numerical_columns: list
+        a list of numerical feature names.
+
+    binary_columns: list
+        a list of binary feature names, accept binary indicators like (yes,no); (true,false); (0,1).
+    
+    feature_extractor: TransTabFeatureExtractor
+        a feature extractor to tokenize the input tables. if not passed the model will build itself.
+
+    num_class: int
+        number of output classes to be predicted.
+
+    hidden_dim: int
+        the dimension of hidden embeddings.
+    
+    num_layer: int
+        the number of transformer layers used in the encoder.
+    
+    num_attention_head: int
+        the numebr of heads of multihead self-attention layer in the transformers.
+
+    hidden_dropout_prob: float
+        the dropout ratio in the transformer encoder.
+
+    ffn_dim: int
+        the dimension of feed-forward layer in the transformer layer.
+    
+    activation: str
+        the name of used activation functions, support ``"relu"``, ``"gelu"``, ``"selu"``, ``"leakyrelu"``.
+    
+    device: str
+        the device, ``"cpu"`` or ``"cuda:0"``.
+    
+    checkpoint: str
+        the directory to load the pretrained TransTab model.
+
+    Returns
+    -------
+    A TransTabClassifier model.
+
     '''
     model = TransTabClassifier(
         categorical_columns = categorical_columns,
         numerical_columns = numerical_columns,
         binary_columns = binary_columns,
+        feature_extractor = feature_extractor,
         num_class=num_class,
         hidden_dim=hidden_dim,
         num_layer=num_layer,
@@ -64,9 +98,40 @@ def build_extractor(
     categorical_columns=None,
     numerical_columns=None,
     binary_columns=None,
-    disable_tokenizer_parallel=False,
     ignore_duplicate_cols=False,
+    disable_tokenizer_parallel=False,
     checkpoint=None) -> TransTabFeatureExtractor:
+    '''Build a feature extractor for TransTab model.
+
+    Parameters
+    ----------
+    categorical_columns: list 
+        a list of categorical feature names.
+
+    numerical_columns: list
+        a list of numerical feature names.
+
+    binary_columns: list
+        a list of binary feature names, accept binary indicators like (yes,no); (true,false); (0,1).
+
+    ignore_duplicate_cols: bool
+        if there is one column assigned to more than one type, e.g., the feature age is both nominated
+        as categorical and binary columns, the model will raise errors. set True to avoid this error as 
+        the model will ignore this duplicate feature.
+
+    disable_tokenizer_parallel: bool
+        if the returned feature extractor is leveraged by the collate function for a dataloader,
+        try to set this False in case the dataloader raises errors because the dataloader builds 
+        multiple workers and the tokenizer builds multiple workers at the same time.
+
+    checkpoint: str
+        the directory of the predefined TransTabFeatureExtractor.
+
+    Returns
+    -------
+    A TransTabFeatureExtractor module.
+
+    '''
     feature_extractor = TransTabFeatureExtractor(
         categorical_columns=categorical_columns,
         numerical_columns=numerical_columns,
@@ -76,7 +141,10 @@ def build_extractor(
     )
     if checkpoint is not None:
         extractor_path = os.path.join(checkpoint, constants.EXTRACTOR_STATE_DIR)
-        feature_extractor.load(extractor_path)
+        if os.path.exists(extractor_path):
+            feature_extractor.load(extractor_path)
+        else:
+            feature_extractor.load(checkpoint)
     return feature_extractor    
 
 def build_contrastive_learner(
@@ -98,24 +166,78 @@ def build_contrastive_learner(
     ignore_duplicate_cols=True,
     ): 
     '''Build a contrastive learner for pretraining based on TransTab.
-    [Warning] If no cat/num/bin specified, the model takes ALL as categorical columns,
+    If no cat/num/bin specified, the model takes ALL as categorical columns,
     which may undermine the performance significantly.
-    Args:
-        categorical_columns: a list of categorical features
-        numerical_columns: a list of numerical features
-        binary_columns: a list of yes or no feature names, accept binary indicators like
-            (yes,no); (true,false); (0,1).
-        num_partition: the number of partitions made for contrastive sampling
-        overlap_ratio: the overlapping ratio between the columns of each partition
-        supervised: if set True, take supervised VPCL; otherwise take self-supervised VPCL
-        projection_dim: the dimension of projection head
-        hidden_dim: dimension of embedding and transformer layer
-        num_attention_head: number of attention heads of transformer layer
-        ffn_dim: dimension of feedforward layer in transformer
-        activation: activation function used
-        device: specify the device of the classifier model
-        checkpoint: directory of the pretrained transtab model.
-        ignore_duplicate_cols: set True if one col is assigned to two types, this col will be ignored if set True; otherwise raise error.
+
+    If there is one column assigned to more than one type, e.g., the feature age is both nominated
+    as categorical and binary columns, the model will raise errors. set ``ignore_duplicate_cols=True`` to avoid this error as 
+    the model will ignore this duplicate feature.
+
+    Parameters
+    ----------
+    categorical_columns: list 
+        a list of categorical feature names.
+
+    numerical_columns: list
+        a list of numerical feature names.
+
+    binary_columns: list
+        a list of binary feature names, accept binary indicators like (yes,no); (true,false); (0,1).
+    
+    feature_extractor: TransTabFeatureExtractor
+        a feature extractor to tokenize the input tables. if not passed the model will build itself.
+
+    hidden_dim: int
+        the dimension of hidden embeddings.
+    
+    num_layer: int
+        the number of transformer layers used in the encoder.
+    
+    num_attention_head: int
+        the numebr of heads of multihead self-attention layer in the transformers.
+
+    hidden_dropout_prob: float
+        the dropout ratio in the transformer encoder.
+
+    ffn_dim: int
+        the dimension of feed-forward layer in the transformer layer.
+    
+    projection_dim: int
+        the dimension of projection head on the top of encoder.
+    
+    overlap_ratio: float
+        the overlap ratio of columns of different partitions when doing subsetting.
+    
+    num_partition: int
+        the number of partitions made for vertical-partition contrastive learning.
+
+    supervised: bool
+        whether or not to take supervised VPCL, otherwise take self-supervised VPCL.
+    
+    temperature: float
+        temperature used to compute logits for contrastive learning.
+
+    base_temperature: float
+        base temperature used to normalize the temperature.
+    
+    activation: str
+        the name of used activation functions, support ``"relu"``, ``"gelu"``, ``"selu"``, ``"leakyrelu"``.
+    
+    device: str
+        the device, ``"cpu"`` or ``"cuda:0"``.
+
+    checkpoint: str
+        the directory of the pretrained transtab model.
+    
+    ignore_duplicate_cols: bool
+        if there is one column assigned to more than one type, e.g., the feature age is both nominated
+        as categorical and binary columns, the model will raise errors. set True to avoid this error as 
+        the model will ignore this duplicate feature.
+    
+    Returns
+    -------
+    A TransTabForCL model.
+
     '''
 
     model = TransTabForCL(
@@ -172,26 +294,73 @@ def train(model,
     ignore_duplicate_cols=False,
     eval_less_is_better=False,
     ):
-    '''Args:
-    model: TransTab based model
-    trainset: a list of trainset, or a single trainset
-    valset: a single valset
-    num_epoch: number of training epochs
-    batch_size: training batch size
-    eval_batch_size: evaluation batch size,
-    lr: training learning rate,
-    weight_decay: training weight decay,
-    patience: early stopping patience,
-    warmup_ratio: the portion of training steps for learning rate warmup,
-    warmup_steps: the number of training steps for learning rate warmup,
-    eval_metric: evaluation metric during training for early stopping
-    output_dir: output training model directory,
-    collate_fn: specify training collate function if it is not standard supervised learning, e.g., contrastive learning.
-    num_workers: number of workers for the dataloader,
-    balance_sample: whether or not do bootstrapping to maintain in batch samples are in balanced classes, only support binary classification,
-    load_best_at_last: whether or not load the best checkpoint after the training completes,
-    ignore_duplicate_cols: whether or not ignore the contradictory of cat/num/bin cols
-    eval_less_is_better: if the set eval_metric is the less the better. For val_loss, it should be set True.
+    '''
+    The shared train function for all TransTabModel based models.
+
+    Parameters
+    ----------
+    model: TransTabModel and its subclass
+        A subclass of the base model. Should be able to output logits and loss in forward, e.g.,
+        ``logit, loss = model(x, y)``.
+    
+    trainset: list or tuple
+        a list of trainsets, or a single trainset consisting of (x, y). x: pd.DataFrame or dict, y: pd.Series.
+    
+    valset: list or tuple
+        a list of valsets, or a single valset of consisting of (x, y).
+    
+    num_epoch: int
+        number of training epochs.
+    
+    batch_size: int
+        training batch size.
+    
+    eval_batch_size: int
+        evaluation batch size.
+
+    lr: float
+        training learning rate.
+
+    weight_decay: float
+        training weight decay.
+    
+    patience: int
+        early stopping patience, only valid when ``valset`` is given.
+    
+    warmup_ratio: float
+        the portion of training steps for learning rate warmup, if `warmup_steps` is set, it will be ignored.
+    
+    warmup_steps: int
+        the number of training steps for learning rate warmup.
+    
+    eval_metric: str
+        the evaluation metric during training for early stopping, can be ``"acc"``, ``"auc"``, ``"mse"``, ``"val_loss"``.
+    
+    output_dir: str
+        the output training model weights and feature extractor configurations.
+    
+    collate_fn: function
+        specify training collate function if it is not standard supervised learning, e.g., contrastive learning.
+
+    num_workers: int
+        the number of workers for the dataloader.
+    
+    balance_sample: bool
+        balance_sample: whether or not do bootstrapping to maintain in batch samples are in balanced classes, only support binary classification.
+    
+    load_best_at_last: bool
+        whether or not load the best checkpoint after the training completes.
+
+    ignore_duplicate_cols: bool
+        whether or not ignore the contradictory of cat/num/bin cols
+
+    eval_less_is_better: bool
+        if the set eval_metric is the less the better. For val_loss, it should be set True.
+    
+    Returns
+    -------
+        None
+        
     '''
     if isinstance(trainset, tuple): trainset = [trainset]
 

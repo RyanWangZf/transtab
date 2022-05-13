@@ -1,0 +1,4 @@
+train
+=====
+
+.. autofunction:: transtab.train

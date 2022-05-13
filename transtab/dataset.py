@@ -8,12 +8,63 @@ from sklearn.model_selection import train_test_split
 import openml
 from loguru import logger
 
+# TODO
+# organize teh dataset_config for the load_data API.
+# dataset_config = {
+# 'dataname': { 'cat':[],'bin':[], 'num':[], 
+# 'cols':[]}
+# }
+
 
 OPENML_DATACONFIG = {
     'credit-g': {'bin': ['own_telephone', 'foreign_worker']},
 }
 
 def load_data(dataname, dataset_config=None, encode_cat=False, data_cut=None, seed=123):
+    '''Load datasets from the local device or from openml.datasets.
+
+    Parameters
+    ----------
+    dataname: str or int
+        the dataset name/index intended to be loaded from openml. or the directory to the local dataset.
+    
+    dataset_config: dict
+        the dataset configuration to specify for loading. Please note that this variable will
+        override the configuration loaded from the local files or from the openml.dataset.
+    
+    encode_cat: bool
+        whether encoder the categorical/binary columns to be discrete indices, keep False for TransTab models.
+    
+    data_cut: int
+        how many to split the raw tables into partitions equally; set None will not execute partition.
+
+    seed: int
+        the random seed set to ensure the fixed train/val/test split.
+
+    Returns
+    -------
+    all_list: list or tuple
+        the complete dataset, be (x,y) or [(x1,y1),(x2,y2),...].
+
+    train_list: list or tuple
+        the train dataset, be (x,y) or [(x1,y1),(x2,y2),...].
+
+    val_list: list or tuple
+        the validation dataset, be (x,y) or [(x1,y1),(x2,y2),...].
+
+    test_list: list
+        the test dataset, be (x,y) or [(x1,y1),(x2,y2),...].
+
+    cat_col_list: list
+        the list of categorical column names.
+
+    num_col_list: list
+        the list of numerical column names.
+
+    bin_col_list: list
+        the list of binary column names.
+
+    '''
     if dataset_config is None: dataset_config = OPENML_DATACONFIG
     if isinstance(dataname, str):
         # load a single tabular data
@@ -59,6 +110,7 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
         y = df['target_label']
         X = df.drop(['target_label'],axis=1)
         all_cols = [col.lower() for col in X.columns.tolist()]
+
         X.columns = all_cols
         attribute_names = all_cols
         ftfile = os.path.join(dataname, 'numerical_feature.txt')
@@ -72,6 +124,22 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
         else:
             bin_cols = []
         cat_cols = [col for col in all_cols if col not in num_cols and col not in bin_cols]
+
+        # update cols by loading dataset_config
+        if dataname in dataset_config:
+            data_config = dataset_config[dataname]
+            if 'columns' in data_config:
+                new_cols = dataset_config[dataname]['columns']
+                X.columns = new_cols
+
+            if 'bin' in data_config:
+                bin_cols = data_config['bin']
+            
+            if 'cat' in data_config:
+                cat_cols = data_config['cat']
+
+            if 'num' in data_config:
+                num_cols = data_config['num']
         
     else:
         dataset = openml.datasets.get_dataset(dataname)
@@ -85,13 +153,6 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
             print(f'openml data index: {openml_list.loc[openml_list.name == dataname].index[0]}')
         
         print(f'load data from {dataname}')
-
-        # rename column names if is given
-        if dataname in dataset_config:
-            if 'cols' in dataset_config[dataname]:
-                new_cols = dataset_config[dataname]['cols']
-                X.columns = new_cols
-                attribute_names = new_cols
 
         # drop cols which only have one unique value
         drop_cols = [col for col in attribute_names if X[col].nunique()<=1]
@@ -138,6 +199,23 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
         X[bin_cols] = X[bin_cols].astype(int).values
     
     X = X[bin_cols + num_cols + cat_cols]
+
+    # rename column names if is given
+    if dataname in dataset_config:
+        data_config = dataset_config[dataname]
+        if 'columns' in data_config:
+            new_cols = data_config['columns']
+            X.columns = new_cols
+            attribute_names = new_cols
+
+        if 'bin' in data_config:
+            bin_cols = data_config['bin']
+        
+        if 'cat' in data_config:
+            cat_cols = data_config['cat']
+
+        if 'num' in data_config:
+            num_cols = data_config['num']
 
     # split train/val/test
     train_dataset, test_dataset, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=seed, stratify=y, shuffle=True)
