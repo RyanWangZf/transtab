@@ -11,6 +11,13 @@ Welcome to transtab documentation!
 * **Table Pretraining**: we pretrain models on many tables with distinct columns and identifiers for the target tabular prediction task.
 * **Zero-shot inference**: we build a model for an unseen table that only has partial overlaps with training tables.
 
+.. figure:: ../images/transtab_tasks.png
+
+    The demonstration of ML modeling on different tabular data settings.
+    Previous tabular methods only do vanilla supervised training or pretraining on the same table due to they only accept 
+    **fixed-column tables**. By contrast, \method covers more new tasks (1) to (4) as it accepts **variable-column** tables.
+
+
 The basic usage of `transtab` can be done in a couple of lines:
 
 .. code-block:: python
