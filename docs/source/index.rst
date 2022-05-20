@@ -14,7 +14,7 @@ Welcome to transtab documentation!
 .. figure:: ../images/transtab_tasks.png
 
     The demonstration of ML modeling on different tabular data settings.
-    Previous tabular methods only do vanilla supervised training or pretraining on the same table due to they only accept 
+    Previous tabular methods only do vanilla supervised training or pretraining on the same table due to they only accept
     **fixed-column tables**. By contrast, \method covers more new tasks (1) to (4) as it accepts **variable-column** tables.
 
 
@@ -35,7 +35,7 @@ The basic usage of `transtab` can be done in a couple of lines:
     transtab.train(model, trainset, valset, **training_arguments)
 
     # make predictions, df_x is a pd.DataFrame with shape (n, d)
-    # return the predictions ypred with shape (n, 1) if binary classification; 
+    # return the predictions ypred with shape (n, 1) if binary classification;
     # (n, n_class) if multiclass classification.
     ypred = transtab.predict(model, df_x)
 
@@ -55,9 +55,9 @@ If you use `transtab` in a scientific publication, we would appreciate citations
     @article{wang2022transtab,
         author = {Wang, Zifeng and Sun, Jimeng},
         title = {TransTab: Learning Transferable Tabular Transformers Across Tables},
+        journal={arXiv preprint arXiv:2205.09328},
         year = {2022},
     }
-
 
 
 .. toctree::
@@ -75,10 +75,10 @@ If you use `transtab` in a scientific publication, we would appreciate citations
     :maxdepth: 2
     :hidden:
     :caption: Documentation
-    
+
     main_func
     models
-    
+
 
 .. toctree::
     :maxdepth: 2

@@ -13,12 +13,12 @@ with open(os.path.join(this_directory, 'requirements.txt'),
 
 setuptools.setup(
     name = 'transtab',
-    version = '0.0.2c',
+    version = '0.0.1',
     author = 'Zifeng Wang',
     author_email = 'zifengw2@illinois.edu',
-    description = 'A flexible tabular prediction model that handles heterogeneous input tables.',
+    description = 'A flexible tabular prediction model that handles variable-column input tables.',
     url = 'https://github.com/RyanWangZf/transtab',
-    keywords=['tabular prediction'],
+    keywords=['tabular data', 'machine learning', 'data mining', 'data science'],
     long_description=long_description,
     long_description_content_type='text/markdown',
     packages=setuptools.find_packages(exclude=['test']),
@@ -32,4 +32,3 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
 )
-

@@ -12,6 +12,13 @@ After that, *transtab* can be downloaded directly using **pip**.
 
     pip install transtab
 
+or
+
+.. code-block:: bash
+
+    pip install git+https://github.com/RyanWangZf/transtab.git
+
+
 Alternatively, you can clone the project and install from local
 
 .. code-block:: bash
@@ -20,12 +27,12 @@ Alternatively, you can clone the project and install from local
     cd transtab
     pip install .
 
-Troubleshooting:
+**Troubleshooting**:
 
-1. If encountering `ERROR: Failed building wheel for tokenizers` on MAC/Linux, please call
+1. If encountering ``ERROR: Failed building wheel for tokenizers`` on MAC/Linux, please call
 
 .. code-block:: bash
 
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-then restart the terminal and call `pip` again.
+then restart the terminal and call ``pip`` again.
