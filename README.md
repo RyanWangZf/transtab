@@ -1,5 +1,8 @@
 # TransTab: A flexible tabular prediction model
 
+[![Documentation Status](https://readthedocs.org/projects/transtab/badge/?version=latest)](https://transtab.readthedocs.io/en/latest/?badge=latest)
+
+
 Document is available at https://transtab.readthedocs.io/en/latest/index.html.
 
 This repository provides the python package `transtab` for flexible tabular prediction model. The basic usage of `transtab` can be done in a couple of lines!
