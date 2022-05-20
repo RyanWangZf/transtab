@@ -5,7 +5,9 @@
 [![Documentation Status](https://readthedocs.org/projects/transtab/badge/?version=latest)](https://transtab.readthedocs.io/en/latest/?badge=latest)
 [![License](https://img.shields.io/badge/License-BSD_2--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
 
+
 Document is available at https://transtab.readthedocs.io/en/latest/index.html.
+
 
 This repository provides the python package `transtab` for flexible tabular prediction model. The basic usage of `transtab` can be done in a couple of lines!
 
@@ -29,6 +31,28 @@ ypred = transtab.predict(model, df_x)
 ```
 
 It's easy, isn't it?
+
+
+
+## How to install
+
+First, download the right ``pytorch`` version following the guide on https://pytorch.org/get-started/locally/.
+
+Then try to install from pypi directly:
+
+```bash
+pip install transtab
+```
+
+or
+
+```bash
+pip install git+https://github.com/RyanWangZf/transtab.git
+```
+
+
+
+Please refer to for [more guidance on installation](https://transtab.readthedocs.io/en/latest/install.html) and troubleshooting.
 
 
 
@@ -70,6 +94,8 @@ model, collate_fn = transtab.build_contrastive_learner(
 # start contrastive pretraining training
 transtab.train(model, trainset, valset, collate_fn=collate_fn, **training_arguments)
 ```
+
+
 
 ## Citation
 
