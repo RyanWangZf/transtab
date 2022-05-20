@@ -1,7 +1,11 @@
 # TransTab: A flexible tabular prediction model
 
+
+[![PyPI version](https://badge.fury.io/py/transtab.svg)](https://badge.fury.io/py/transtab)
+
 [![Documentation Status](https://readthedocs.org/projects/transtab/badge/?version=latest)](https://transtab.readthedocs.io/en/latest/?badge=latest)
 
+[![License](https://img.shields.io/badge/License-BSD_2--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
 
 Document is available at https://transtab.readthedocs.io/en/latest/index.html.
 
