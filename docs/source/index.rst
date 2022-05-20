@@ -42,7 +42,7 @@ The basic usage of `transtab` can be done in a couple of lines:
 
 It's easy, isn't it?
 
-Let's start the journey from the `installation <https://transtab.readthedocs.io/en/latest/installation.html>`_ and the `first demo on supervised tabular learning <https://transtab.readthedocs.io/en/latest/fast_train.html>`_ !
+Let's start the journey from the `installation <https://transtab.readthedocs.io/en/latest/install.html>`_ and the `first demo on supervised tabular learning <https://transtab.readthedocs.io/en/latest/fast_train.html>`_ !
 
 We also provide the examples on `tabular transfer learning <https://transtab.readthedocs.io/en/latest/example_transfer.html>`_ and `tabular pretraining <https://transtab.readthedocs.io/en/latest/example_pretrain.html>`_ for the quick start.
 
