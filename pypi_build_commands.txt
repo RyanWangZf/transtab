@@ -1,5 +1,4 @@
 # This is a command list for building pypi packages
-
 python setup.py sdist bdist_wheel
 
 twine check dist/*

@@ -1,5 +1,7 @@
 # TransTab: A flexible tabular prediction model
 
+Document is available at https://transtab.readthedocs.io/en/latest/index.html.
+
 This repository provides the python package `transtab` for flexible tabular prediction model. The basic usage of `transtab` can be done in a couple of lines!
 
 ```python
@@ -16,7 +18,7 @@ model = transtab.build_classifier(cat_cols, num_cols, bin_cols)
 transtab.train(model, trainset, valset, **training_arguments)
 
 # make predictions, df_x is a pd.DataFrame with shape (n, d)
-# return the predictions ypred with shape (n, 1) if binary classification; 
+# return the predictions ypred with shape (n, 1) if binary classification;
 # (n, n_class) if multiclass classification.
 ypred = transtab.predict(model, df_x)
 ```
@@ -64,8 +66,6 @@ model, collate_fn = transtab.build_contrastive_learner(
 transtab.train(model, trainset, valset, collate_fn=collate_fn, **training_arguments)
 ```
 
-
-
 ## Citation
 
 If you find this package useful, please consider citing the following paper:
@@ -74,6 +74,7 @@ If you find this package useful, please consider citing the following paper:
 @article{wang2022transtab,
 	title = {TransTab: Learning Transferable Tabular Transformers Across Tables},
 	author = {Wang, Zifeng and Sun, Jimeng},
+     journal={arXiv preprint arXiv:2205.09328},
 	year = {2022},
 }
 ```
