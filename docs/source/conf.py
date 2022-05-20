@@ -16,6 +16,11 @@ import pdb
 
 sys.path.insert(0, os.path.abspath('../../'))
 
+import mock
+MOCK_MODULES =['loguru','numpy','scikit_learn','setuptools','transformers','tqdm','pandas','openml',]
+for mod_name in MOCK_MODULES:
+   sys.modules[mod_name] = mock.Mock()
+
 
 # -- Project information -----------------------------------------------------
 

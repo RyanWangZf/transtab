@@ -4,7 +4,7 @@ build_extractor
 .. autofunction:: transtab.build_extractor
 
 
-The returned feature extractor takes pd.DataFrame as inputs and outputs the 
+The returned feature extractor takes pd.DataFrame as inputs and outputs the
 encoded outputs in dict.
 
 .. code-block:: python
@@ -22,11 +22,11 @@ encoded outputs in dict.
 
     '''
         {
-        'x_num': tensor([[1.],[2.]], dtype=torch.float64), 
-        'num_col_input_ids': tensor([[2287]]), 
-        'x_cat_input_ids': tensor([[5907, 3287], [5907, 2931]]), 
-        'x_bin_input_ids': None, 
-        'num_att_mask': tensor([[1]]), 
+        'x_num': tensor([[1.],[2.]], dtype=torch.float64),
+        'num_col_input_ids': tensor([[2287]]),
+        'x_cat_input_ids': tensor([[5907, 3287], [5907, 2931]]),
+        'x_bin_input_ids': None,
+        'num_att_mask': tensor([[1]]),
         'cat_att_mask': tensor([[1, 1], [1, 1]])
         }
     '''

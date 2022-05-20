@@ -4,7 +4,7 @@ load_data
 .. autofunction:: transtab.load_data
 
 
-*transtab* provides flexible data loading function. 
+*transtab* provides flexible data loading function.
 It can be used to load arbitrary datasets from `openml <https://www.openml.org/>`_ supported by `openml.datasets API <https://docs.openml.org/Python-API/>`_.
 
 .. code-block:: python
@@ -12,7 +12,7 @@ It can be used to load arbitrary datasets from `openml <https://www.openml.org/>
     # specify the dataname
     allset, trainset, valset, testset, cat_cols, num_cols, bin_cols \
         = transtab.load_data('credit-g')
-    
+
     # or specify the dataset index (in openml)
     allset, trainset, valset, testset, cat_cols, num_cols, bin_cols \
         = transtab.load_data(31)
@@ -46,7 +46,7 @@ One can also pass ``dataset_config`` to the ``load_data`` function to manipulate
             'bin':['b'], # specify all the binary columns
             'num':['c']} # specify all the numerical columns
             }
-    
+
     allset, trainset, valset, testset, cat_cols, num_cols, bin_cols \
         = transtab.load_data('credit-g', dataset_config=dataset_config)
 
