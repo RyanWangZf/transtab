@@ -1,4 +1,4 @@
-# TransTab: A flexible tabular prediction model
+# TransTab: A flexible tabular prediction model [[arxiv]](https://arxiv.org/pdf/2205.09328.pdf)
 
 
 [![PyPI version](https://badge.fury.io/py/transtab.svg)](https://badge.fury.io/py/transtab)
