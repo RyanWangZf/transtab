@@ -91,7 +91,7 @@ class TransTabFeatureExtractor:
             os.environ["TOKENIZERS_PARALLELISM"] = "false"
         self.vocab_size = self.tokenizer.vocab_size
         self.pad_token_id = self.tokenizer.pad_token_id
-        
+
         self.categorical_columns = categorical_columns
         self.numerical_columns = numerical_columns
         self.binary_columns = binary_columns
@@ -145,7 +145,7 @@ class TransTabFeatureExtractor:
             np.random.shuffle(cat_cols)
             np.random.shuffle(num_cols)
             np.random.shuffle(bin_cols)
-        
+
         # TODO:
         # mask out NaN values like done in binary columns
         if len(num_cols) > 0:
@@ -164,7 +164,7 @@ class TransTabFeatureExtractor:
             x_cat = x_cat.apply(lambda x: x.name + ' '+ x) * x_mask # mask out nan features
             x_cat_str = x_cat.agg(' '.join, axis=1).values.tolist()
             x_cat_ts = self.tokenizer(x_cat_str, padding=True, truncation=True, add_special_tokens=False, return_tensors='pt')
-            
+
             encoded_inputs['x_cat_input_ids'] = x_cat_ts['input_ids']
             encoded_inputs['cat_att_mask'] = x_cat_ts['attention_mask']
 
@@ -173,7 +173,7 @@ class TransTabFeatureExtractor:
             x_mask = x_bin.isin(['yes','true']).astype(int)
             x_bin_str = x_bin.apply(lambda x: x.name + '')  * x_mask
             x_bin_str = x_bin_str.agg(' '.join, axis=1).values.tolist()
-            x_bin_ts = self.tokenizer(x_bin_str, padding=True, truncation=True, add_special_tokens=False, return_tensors='pt')            
+            x_bin_ts = self.tokenizer(x_bin_str, padding=True, truncation=True, add_special_tokens=False, return_tensors='pt')
             if x_bin_ts['input_ids'].shape[1] > 0: # not all false
                 encoded_inputs['x_bin_input_ids'] = x_bin_ts['input_ids']
                 encoded_inputs['bin_att_mask'] = x_bin_ts['attention_mask']
@@ -186,7 +186,7 @@ class TransTabFeatureExtractor:
         save_path = os.path.join(path, constants.EXTRACTOR_STATE_DIR)
         if not os.path.exists(save_path):
             os.makedirs(save_path)
-        
+
         # save tokenizer
         tokenizer_path = os.path.join(save_path, constants.TOKENIZER_DIR)
         self.tokenizer.save_pretrained(tokenizer_path)
@@ -210,7 +210,7 @@ class TransTabFeatureExtractor:
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
         with open(coltype_path, 'r', encoding='utf-8') as f:
             col_type_dict = json.loads(f.read())
-        
+
         self.categorical_columns = col_type_dict['categorical']
         self.numerical_columns = col_type_dict['numerical']
         self.binary_columns = col_type_dict['binary']
@@ -230,7 +230,7 @@ class TransTabFeatureExtractor:
         if bin is not None:
             self.binary_columns.extend(bin)
             self.binary_columns = list(set(self.binary_columns))
-        
+
         col_no_overlap, duplicate_cols = self._check_column_overlap(self.categorical_columns, self.numerical_columns, self.binary_columns)
         if not self.ignore_duplicate_cols:
             for col in duplicate_cols:
@@ -255,13 +255,13 @@ class TransTabFeatureExtractor:
     def _solve_duplicate_cols(self, duplicate_cols):
         for col in duplicate_cols:
             logger.warning('Find duplicate cols named `{col}`, will ignore it during training!')
-            if col in self.categorical_columns: 
+            if col in self.categorical_columns:
                 self.categorical_columns.remove(col)
                 self.categorical_columns.append(f'[cat]{col}')
-            if col in self.numerical_columns: 
+            if col in self.numerical_columns:
                 self.numerical_columns.remove(col)
                 self.numerical_columns.append(f'[num]{col}')
-            if col in self.binary_columns: 
+            if col in self.binary_columns:
                 self.binary_columns.remove(col)
                 self.binary_columns.append(f'[bin]{col}')
 
@@ -284,15 +284,15 @@ class TransTabFeatureProcessor(nn.Module):
         '''
         super().__init__()
         self.word_embedding = TransTabWordEmbedding(
-            vocab_size=vocab_size, 
-            hidden_dim=hidden_dim, 
+            vocab_size=vocab_size,
+            hidden_dim=hidden_dim,
             hidden_dropout_prob=hidden_dropout_prob,
             padding_idx=pad_token_id
             )
         self.num_embedding = TransTabNumEmbedding(hidden_dim)
         self.align_layer = nn.Linear(hidden_dim, hidden_dim, bias=False)
         self.device = device
-    
+
     def _avg_embedding_by_mask(self, embs, att_mask=None):
         if att_mask is None:
             return embs.mean(1)
@@ -300,8 +300,8 @@ class TransTabFeatureProcessor(nn.Module):
             embs[att_mask==0] = 0
             embs = embs.sum(1) / att_mask.sum(1,keepdim=True).to(embs.device)
             return embs
-            
-    def forward(self, 
+
+    def forward(self,
         x_num=None,
         num_col_input_ids=None,
         num_att_mask=None,
@@ -330,7 +330,7 @@ class TransTabFeatureProcessor(nn.Module):
         if x_cat_input_ids is not None:
             cat_feat_embedding = self.word_embedding(x_cat_input_ids.to(self.device))
             cat_feat_embedding = self.align_layer(cat_feat_embedding)
-        
+
         if x_bin_input_ids is not None:
             if x_bin_input_ids.shape[1] == 0: # all false, pad zero
                 x_bin_input_ids = torch.zeros(x_bin_input_ids.shape[0],dtype=int)[:,None]
@@ -340,13 +340,13 @@ class TransTabFeatureProcessor(nn.Module):
         # concat all embeddings
         emb_list = []
         att_mask_list = []
-        if num_feat_embedding is not None: 
+        if num_feat_embedding is not None:
             emb_list += [num_feat_embedding]
             att_mask_list += [torch.ones(num_feat_embedding.shape[0], num_feat_embedding.shape[1])]
-        if cat_feat_embedding is not None: 
+        if cat_feat_embedding is not None:
             emb_list += [cat_feat_embedding]
             att_mask_list += [cat_att_mask]
-        if bin_feat_embedding is not None: 
+        if bin_feat_embedding is not None:
             emb_list += [bin_feat_embedding]
             att_mask_list += [bin_att_mask]
         if len(emb_list) == 0: raise Exception('no feature found belonging into numerical, categorical, or binary, check your data!')
@@ -401,6 +401,8 @@ class TransTabTransformerLayer(nn.Module):
     # self-attention block
     def _sa_block(self, x: Tensor,
                   attn_mask: Optional[Tensor], key_padding_mask: Optional[Tensor]) -> Tensor:
+        src = x
+        key_padding_mask = ~key_padding_mask.bool()
         x = self.self_attn(x, x, x,
                            attn_mask=attn_mask,
                            key_padding_mask=key_padding_mask,
@@ -419,7 +421,7 @@ class TransTabTransformerLayer(nn.Module):
         if 'activation' not in state:
             state['activation'] = F.relu
         super().__setstate__(state)
-    
+
     def forward(self, src, src_mask= None, src_key_padding_mask= None) -> Tensor:
         r"""Pass the input through the encoder layer.
 
@@ -440,10 +442,11 @@ class TransTabTransformerLayer(nn.Module):
             else:
                 x = self.norm1(x + self._sa_block(x, src_mask, src_key_padding_mask))
                 x = self.norm2(x + self._ff_block(x))
+
         else: # do not use layer norm
                 x = x + self._sa_block(x, src_mask, src_key_padding_mask)
                 x = x + self._ff_block(x)
-        return x    
+        return x
 
 class TransTabEncoder(nn.Module):
     def __init__(self,
@@ -455,7 +458,10 @@ class TransTabEncoder(nn.Module):
         activation='relu',
         ):
         super().__init__()
-        self.transformer_encoder = nn.ModuleList([TransTabTransformerLayer(d_model=hidden_dim, 
+        self.transformer_encoder = nn.ModuleList(
+            [
+            TransTabTransformerLayer(
+            d_model=hidden_dim,
             nhead=num_attention_head,
             dropout=hidden_dropout_prob,
             dim_feedforward=ffn_dim,
@@ -464,9 +470,11 @@ class TransTabEncoder(nn.Module):
             norm_first=False,
             use_layer_norm=True,
             activation=activation,
-            )])
+            )
+            ]
+            )
         if num_layer > 1:
-            encoder_layer = TransTabTransformerLayer(d_model=hidden_dim, 
+            encoder_layer = TransTabTransformerLayer(d_model=hidden_dim,
                 nhead=num_attention_head,
                 dropout=hidden_dropout_prob,
                 dim_feedforward=ffn_dim,
@@ -484,8 +492,8 @@ class TransTabEncoder(nn.Module):
         embedding: bs, num_token, hidden_dim
         '''
         outputs = embedding
-        for mod in self.transformer_encoder:
-            outputs = mod(outputs, src_key_padding_mask=attention_mask)        
+        for i, mod in enumerate(self.transformer_encoder):
+            outputs = mod(outputs, src_key_padding_mask=attention_mask)
         return outputs
 
 class TransTabLinearClassifier(nn.Module):
@@ -511,7 +519,7 @@ class TransTabProjectionHead(nn.Module):
         projection_dim=128):
         super().__init__()
         self.dense = nn.Linear(hidden_dim, projection_dim, bias=False)
-    
+
     def forward(self, x) -> Tensor:
         h = self.dense(x)
         return h
@@ -544,7 +552,7 @@ class TransTabModel(nn.Module):
 
     Parameters
     ----------
-    categorical_columns: list 
+    categorical_columns: list
         a list of categorical feature names.
 
     numerical_columns: list
@@ -552,16 +560,16 @@ class TransTabModel(nn.Module):
 
     binary_columns: list
         a list of binary feature names, accept binary indicators like (yes,no); (true,false); (0,1).
-    
+
     feature_extractor: TransTabFeatureExtractor
         a feature extractor to tokenize the input tables. if not passed the model will build itself.
-    
+
     hidden_dim: int
         the dimension of hidden embeddings.
-    
+
     num_layer: int
         the number of transformer layers used in the encoder.
-    
+
     num_attention_head: int
         the numebr of heads of multihead self-attention layer in the transformers.
 
@@ -570,17 +578,17 @@ class TransTabModel(nn.Module):
 
     ffn_dim: int
         the dimension of feed-forward layer in the transformer layer.
-    
+
     activation: str
         the name of used activation functions, support ``"relu"``, ``"gelu"``, ``"selu"``, ``"leakyrelu"``.
-    
+
     device: str
         the device, ``"cpu"`` or ``"cuda:0"``.
 
     Returns
     -------
     A TransTabModel model.
-    
+
     '''
 
     def __init__(self,
@@ -639,7 +647,7 @@ class TransTabModel(nn.Module):
         self.cls_token = TransTabCLSToken(hidden_dim=hidden_dim)
         self.device = device
         self.to(device)
-    
+
     def forward(self, x, y=None):
         '''Extract the embeddings based on input tables.
 
@@ -647,10 +655,10 @@ class TransTabModel(nn.Module):
         ----------
         x: pd.DataFrame
             a batch of samples stored in pd.DataFrame.
-        
+
         y: pd.Series
             the corresponding labels for each sample in ``x``. ignored for the basemodel.
-        
+
         Returns
         -------
         final_cls_embedding: torch.Tensor
@@ -716,15 +724,15 @@ class TransTabModel(nn.Module):
             self.feature_extractor.save(ckpt_dir)
 
         return None
-        
+
     def update(self, config):
-        '''Update the configuration of feature extractor's column map for cat, num, and bin cols. 
+        '''Update the configuration of feature extractor's column map for cat, num, and bin cols.
         Or update the number of classes for the output classifier layer.
 
         Parameters
         ----------
         config: dict
-            a dict of configurations: keys cat:list, num:list, bin:list are to specify the new column names; 
+            a dict of configurations: keys cat:list, num:list, bin:list are to specify the new column names;
             key num_class:int is to specify the number of classes for finetuning on a new dataset.
 
         Returns
@@ -760,13 +768,13 @@ class TransTabModel(nn.Module):
     def _solve_duplicate_cols(self, duplicate_cols):
         for col in duplicate_cols:
             logger.warning('Find duplicate cols named `{col}`, will ignore it during training!')
-            if col in self.categorical_columns: 
+            if col in self.categorical_columns:
                 self.categorical_columns.remove(col)
                 self.categorical_columns.append(f'[cat]{col}')
-            if col in self.numerical_columns: 
+            if col in self.numerical_columns:
                 self.numerical_columns.remove(col)
                 self.numerical_columns.append(f'[num]{col}')
-            if col in self.binary_columns: 
+            if col in self.binary_columns:
                 self.binary_columns.remove(col)
                 self.binary_columns.append(f'[bin]{col}')
 
@@ -776,7 +784,7 @@ class TransTabClassifier(TransTabModel):
 
     Parameters
     ----------
-    categorical_columns: list 
+    categorical_columns: list
         a list of categorical feature names.
 
     numerical_columns: list
@@ -784,7 +792,7 @@ class TransTabClassifier(TransTabModel):
 
     binary_columns: list
         a list of binary feature names, accept binary indicators like (yes,no); (true,false); (0,1).
-    
+
     feature_extractor: TransTabFeatureExtractor
         a feature extractor to tokenize the input tables. if not passed the model will build itself.
 
@@ -793,10 +801,10 @@ class TransTabClassifier(TransTabModel):
 
     hidden_dim: int
         the dimension of hidden embeddings.
-    
+
     num_layer: int
         the number of transformer layers used in the encoder.
-    
+
     num_attention_head: int
         the numebr of heads of multihead self-attention layer in the transformers.
 
@@ -805,17 +813,17 @@ class TransTabClassifier(TransTabModel):
 
     ffn_dim: int
         the dimension of feed-forward layer in the transformer layer.
-    
+
     activation: str
         the name of used activation functions, support ``"relu"``, ``"gelu"``, ``"selu"``, ``"leakyrelu"``.
-    
+
     device: str
         the device, ``"cpu"`` or ``"cuda:0"``.
 
     Returns
     -------
     A TransTabClassifier model.
-    
+
     '''
     def __init__(self,
         categorical_columns=None,
@@ -856,23 +864,23 @@ class TransTabClassifier(TransTabModel):
 
     def forward(self, x, y=None):
         '''Make forward pass given the input feature ``x`` and label ``y`` (optional).
-        
+
         Parameters
         ----------
         x: pd.DataFrame or dict
             pd.DataFrame: a batch of raw tabular samples; dict: the output of TransTabFeatureExtractor.
-        
+
         y: pd.Series
             the corresponding labels for each sample in ``x``. if label is given, the model will return
             the classification loss by ``self.loss_fn``.
-        
+
         Returns
         -------
         logits: torch.Tensor
             the [CLS] embedding at the end of transformer encoder.
 
         loss: torch.Tensor or None
-            the classification loss. 
+            the classification loss.
 
         '''
         if isinstance(x, dict):
@@ -901,10 +909,10 @@ class TransTabClassifier(TransTabModel):
             else:
                 y_ts = torch.tensor(y.values).to(self.device).long()
                 loss = self.loss_fn(logits, y_ts)
-            loss = loss.mean()    
+            loss = loss.mean()
         else:
             loss = None
-            
+
         return logits, loss
 
 class TransTabForCL(TransTabModel):
@@ -912,7 +920,7 @@ class TransTabForCL(TransTabModel):
 
     Parameters
     ----------
-    categorical_columns: list 
+    categorical_columns: list
         a list of categorical feature names.
 
     numerical_columns: list
@@ -920,16 +928,16 @@ class TransTabForCL(TransTabModel):
 
     binary_columns: list
         a list of binary feature names, accept binary indicators like (yes,no); (true,false); (0,1).
-    
+
     feature_extractor: TransTabFeatureExtractor
         a feature extractor to tokenize the input tables. if not passed the model will build itself.
 
     hidden_dim: int
         the dimension of hidden embeddings.
-    
+
     num_layer: int
         the number of transformer layers used in the encoder.
-    
+
     num_attention_head: int
         the numebr of heads of multihead self-attention layer in the transformers.
 
@@ -938,35 +946,35 @@ class TransTabForCL(TransTabModel):
 
     ffn_dim: int
         the dimension of feed-forward layer in the transformer layer.
-    
+
     projection_dim: int
         the dimension of projection head on the top of encoder.
-    
+
     overlap_ratio: float
         the overlap ratio of columns of different partitions when doing subsetting.
-    
+
     num_partition: int
         the number of partitions made for vertical-partition contrastive learning.
 
     supervised: bool
         whether or not to take supervised VPCL, otherwise take self-supervised VPCL.
-    
+
     temperature: float
         temperature used to compute logits for contrastive learning.
 
     base_temperature: float
         base temperature used to normalize the temperature.
-    
+
     activation: str
         the name of used activation functions, support ``"relu"``, ``"gelu"``, ``"selu"``, ``"leakyrelu"``.
-    
+
     device: str
         the device, ``"cpu"`` or ``"cuda:0"``.
 
     Returns
     -------
     A TransTabForCL model.
-    
+
     '''
     def __init__(self,
         categorical_columns=None,
@@ -999,7 +1007,7 @@ class TransTabForCL(TransTabModel):
             hidden_dropout_prob=hidden_dropout_prob,
             ffn_dim=ffn_dim,
             activation=activation,
-            device=device, 
+            device=device,
             **kwargs,
             )
         assert num_partition > 0, f'number of contrastive subsets must be greater than 0, got {num_partition}'
@@ -1017,16 +1025,16 @@ class TransTabForCL(TransTabModel):
 
     def forward(self, x, y=None):
         '''Make forward pass given the input feature ``x`` and label ``y`` (optional).
-        
+
         Parameters
         ----------
         x: pd.DataFrame or dict
             pd.DataFrame: a batch of raw tabular samples; dict: the output of TransTabFeatureExtractor.
-        
+
         y: pd.Series
             the corresponding labels for each sample in ``x``. if label is given, the model will return
             the classification loss by ``self.loss_fn``.
-        
+
         Returns
         -------
         logits: None
@@ -1060,7 +1068,7 @@ class TransTabForCL(TransTabModel):
                 feat_x_list.append(feat_x_proj)
         else:
             raise ValueError(f'expect input x to be pd.DataFrame or dict(pretokenized), get {type(x)} instead')
-        
+
         feat_x_multiview = torch.stack(feat_x_list, axis=1) # bs, n_view, emb_dim
 
         if y is not None and self.supervised:
@@ -1151,7 +1159,7 @@ class TransTabForCL(TransTabModel):
 
         labels: torch.Tensor
             the class labels to be used for building positive/negative pairs in VPCL.
-        
+
         Returns
         -------
         loss: torch.Tensor

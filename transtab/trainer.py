@@ -124,14 +124,14 @@ class Trainer:
                     print('early stopped')
                     break
             print('epoch: {}, train loss: {:.4f}, lr: {:.6f}, spent: {:.1f} secs'.format(epoch, train_loss_all, self.optimizer.param_groups[0]['lr'], time.time()-start_time))
-        
+
         if os.path.exists(self.output_dir):
             if self.test_set_list is not None:
                 # load checkpoints
                 logger.info(f'load best at last from {self.output_dir}')
                 state_dict = torch.load(os.path.join(self.output_dir, constants.WEIGHTS_NAME), map_location='cpu')
                 self.model.load_state_dict(state_dict)
-            self.save_model(self.output_dir)        
+            self.save_model(self.output_dir)
 
         logger.info('training complete, cost {:.1f} secs.'.format(time.time()-start_time))
 
@@ -152,18 +152,18 @@ class Trainer:
                         pred_list.append(logits.sigmoid().detach().cpu().numpy())
                     else: # multi-class classification
                         pred_list.append(torch.softmax(logits,-1).detach().cpu().numpy())
-            
+
             if len(pred_list)>0:
                 pred_all = np.concatenate(pred_list, 0)
                 if logits.shape[-1] == 1:
                     pred_all = pred_all.flatten()
-            
+
             if self.args['eval_metric_name'] == 'val_loss':
                 eval_res = np.mean(loss_list)
             else:
                 y_test = pd.concat(y_test, 0)
                 eval_res = self.args['eval_metric'](y_test, pred_all)
-                
+
             eval_res_list.append(eval_res)
 
         return eval_res_list
@@ -220,25 +220,25 @@ class Trainer:
                     break
 
             print('epoch: {}, train loss: {}, lr: {:.6f}'.format(epoch, train_loss_all, self.optimizer.param_groups[0]['lr']))
-        
+
         if os.path.exists(self.output_dir):
             if self.test_set is not None:
                 # load checkpoints
                 print('load best at last from', self.output_dir)
                 state_dict = torch.load(os.path.join(self.output_dir, constants.WEIGHTS_NAME), map_location='cpu')
                 self.model.load_state_dict(state_dict)
-            self.save_model(self.output_dir)        
+            self.save_model(self.output_dir)
 
     def save_model(self, output_dir=None):
         if output_dir is None:
             print('no path assigned for save mode, default saved to ./ckpt/model.pt !')
             output_dir = self.output_dir
-        
+
         if not os.path.exists(output_dir): os.makedirs(output_dir, exist_ok=True)
         logger.info(f'saving model checkpoint to {output_dir}')
         self.model.save(output_dir)
         self.collate_fn.save(output_dir)
-        
+
         if self.optimizer is not None:
             torch.save(self.optimizer.state_dict(), os.path.join(output_dir, constants.OPTIMIZER_NAME))
         if self.lr_scheduler is not None:
@@ -295,14 +295,12 @@ class Trainer:
 
     def _build_dataloader(self, trainset, batch_size, collator, num_workers=8, shuffle=True):
         trainloader = DataLoader(
-            TrainDataset(trainset), 
+            TrainDataset(trainset),
             collate_fn=collator,
-            batch_size=batch_size, 
+            batch_size=batch_size,
             shuffle=shuffle,
             num_workers=num_workers,
             pin_memory=True,
             drop_last=False,
             )
         return trainloader
-
-
