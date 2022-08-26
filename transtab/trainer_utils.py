@@ -7,8 +7,25 @@ import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader
+from transformers.optimization import (
+    get_linear_schedule_with_warmup,
+    get_cosine_schedule_with_warmup,
+    get_cosine_with_hard_restarts_schedule_with_warmup,
+    get_polynomial_decay_schedule_with_warmup,
+    get_constant_schedule,
+    get_constant_schedule_with_warmup
+)
 
 from .modeling_transtab import TransTabFeatureExtractor
+
+TYPE_TO_SCHEDULER_FUNCTION = {
+    'linear': get_linear_schedule_with_warmup,
+    'cosine': get_cosine_schedule_with_warmup,
+    'cosine_with_restarts': get_cosine_with_hard_restarts_schedule_with_warmup,
+    'polynomial': get_polynomial_decay_schedule_with_warmup,
+    'constant': get_constant_schedule,
+    'constant_with_warmup': get_constant_schedule_with_warmup,
+}
 
 class TrainDataset(Dataset):
     def __init__(self, trainset):
@@ -160,3 +177,45 @@ def random_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
+
+def get_scheduler(
+    name,
+    optimizer,
+    num_warmup_steps = None,
+    num_training_steps = None,
+    ):
+    '''
+    Unified API to get any scheduler from its name.
+
+    Parameters
+    ----------
+    name: str
+        The name of the scheduler to use.
+
+    optimizer: torch.optim.Optimizer
+        The optimizer that will be used during training.
+
+    num_warmup_steps: int
+        The number of warmup steps to do. This is not required by all schedulers (hence the argument being
+        optional), the function will raise an error if it's unset and the scheduler type requires it.
+    
+    num_training_steps: int
+        The number of training steps to do. This is not required by all schedulers (hence the argument being
+        optional), the function will raise an error if it's unset and the scheduler type requires it.
+    '''
+    name = name.lower()
+    schedule_func = TYPE_TO_SCHEDULER_FUNCTION[name]
+
+    if name == 'constant':
+        return schedule_func(optimizer)
+    
+    if num_warmup_steps is None:
+        raise ValueError(f"{name} requires `num_warmup_steps`, please provide that argument.")
+
+    if name == 'constant_with_warmup':
+        return schedule_func(optimizer, num_warmup_steps=num_warmup_steps)
+    
+    if num_training_steps is None:
+        raise ValueError(f"{name} requires `num_training_steps`, please provide that argument.")
+
+    return schedule_func(optimizer, num_warmup_steps=num_warmup_steps, num_training_steps=num_training_steps)

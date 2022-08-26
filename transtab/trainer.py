@@ -9,7 +9,7 @@ from torch import nn
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import pandas as pd
-from transformers.optimization import get_scheduler
+# from transformers.optimization import get_scheduler
 from tqdm.autonotebook import trange
 from loguru import logger
 
@@ -18,6 +18,7 @@ from .evaluator import predict, get_eval_metric_fn, EarlyStopping
 from .modeling_transtab import TransTabFeatureExtractor
 from .trainer_utils import SupervisedTrainCollator, TrainDataset
 from .trainer_utils import get_parameter_names
+from .trainer_utils import get_scheduler
 
 class Trainer:
     def __init__(self,
