@@ -5,7 +5,7 @@ import json
 from typing import Dict, Optional, Any, Union, Callable, List
 
 from loguru import logger
-from transformers import AutoTokenizer
+from transformers import BertTokenizer
 import torch
 from torch import nn
 from torch import Tensor
@@ -82,9 +82,9 @@ class TransTabFeatureExtractor:
             if set `true`, the duplicate cols will be deleted, else throws errors.
         '''
         if os.path.exists('./transtab/tokenizer'):
-            self.tokenizer = AutoTokenizer.from_pretrained('./transtab/tokenizer')
+            self.tokenizer = BertTokenizer.from_pretrained('./transtab/tokenizer')
         else:
-            self.tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
+            self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
             self.tokenizer.save_pretrained('./transtab/tokenizer')
         self.tokenizer.__dict__['model_max_length'] = 512
         if disable_tokenizer_parallel: # disable tokenizer parallel
@@ -169,9 +169,8 @@ class TransTabFeatureExtractor:
             encoded_inputs['cat_att_mask'] = x_cat_ts['attention_mask']
 
         if len(bin_cols) > 0:
-            x_bin = x[bin_cols].astype(str).applymap(lambda x: x.lower().strip())
-            x_mask = x_bin.isin(['yes','true']).astype(int)
-            x_bin_str = x_bin.apply(lambda x: x.name + '')  * x_mask
+            x_bin = x[bin_cols] # x_bin should already be integral (binary values in 0 & 1)
+            x_bin_str = x_bin.apply(lambda x: x.name + '') * x_bin
             x_bin_str = x_bin_str.agg(' '.join, axis=1).values.tolist()
             x_bin_ts = self.tokenizer(x_bin_str, padding=True, truncation=True, add_special_tokens=False, return_tensors='pt')
             if x_bin_ts['input_ids'].shape[1] > 0: # not all false

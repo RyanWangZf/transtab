@@ -192,11 +192,8 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
             if 'binary_indicator' in dataset_config[dataname]:
                 X[bin_cols] = X[bin_cols].astype(str).applymap(lambda x: 1 if x.lower() in dataset_config[dataname]['binary_indicator'] else 0).values
             else:
-                X[bin_cols] = X[bin_cols].astype(str).applymap(lambda x: 1 if x.lower() in ['yes','true','1','t'] else 0).values
-        else:
-            X[bin_cols] = X[bin_cols].astype(str).applymap(lambda x: 1 if x.lower() in ['yes','true','1','t'] else 0).values
-        
-        X[bin_cols] = X[bin_cols].astype(int).values
+                X[bin_cols] = X[bin_cols].astype(str).applymap(lambda x: 1 if x.lower() in ['yes','true','1','t'] else 0).values        
+        # if no dataset_config given, keep its original format
     
     X = X[bin_cols + num_cols + cat_cols]
 
