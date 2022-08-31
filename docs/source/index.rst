@@ -69,6 +69,7 @@ If you use `transtab` in a scientific publication, we would appreciate citations
    fast_train
    example_transfer
    example_pretrain
+   example_encode
    data_preparation
 
 .. toctree::
