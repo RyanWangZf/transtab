@@ -9,6 +9,10 @@
 Document is available at https://transtab.readthedocs.io/en/latest/index.html.
 
 
+### News!
+- [08/31] `0.0.2` Support encode tabular inputs into embeddings directly. An example is provided [here](examples/table_embedding.ipynb). Several bugs are fixed.
+
+### Features
 This repository provides the python package `transtab` for flexible tabular prediction model. The basic usage of `transtab` can be done in a couple of lines!
 
 ```python

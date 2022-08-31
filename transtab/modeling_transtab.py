@@ -5,7 +5,7 @@ import json
 from typing import Dict, Optional, Any, Union, Callable, List
 
 from loguru import logger
-from transformers import BertTokenizer
+from transformers import BertTokenizer, BertTokenizerFast
 import torch
 from torch import nn
 from torch import Tensor
@@ -82,9 +82,9 @@ class TransTabFeatureExtractor:
             if set `true`, the duplicate cols will be deleted, else throws errors.
         '''
         if os.path.exists('./transtab/tokenizer'):
-            self.tokenizer = BertTokenizer.from_pretrained('./transtab/tokenizer')
+            self.tokenizer = BertTokenizerFast.from_pretrained('./transtab/tokenizer')
         else:
-            self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+            self.tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')
             self.tokenizer.save_pretrained('./transtab/tokenizer')
         self.tokenizer.__dict__['model_max_length'] = 512
         if disable_tokenizer_parallel: # disable tokenizer parallel
@@ -115,11 +115,17 @@ class TransTabFeatureExtractor:
 
     def __call__(self, x, shuffle=False) -> Dict:
         '''
-        Args:
-            x: pd.DataFrame with column names and features.
-            shuffle: if shuffle column order during the training.
-        Outputs:
-            encoded_inputs: a dict with {
+        Parameters
+        ----------
+        x: pd.DataFrame 
+            with column names and features.
+
+        shuffle: bool
+            if shuffle column order during the training.
+
+        Returns
+        -------
+        encoded_inputs: a dict with {
                 'x_num': tensor contains numerical features,
                 'num_col_input_ids': tensor contains numerical column tokenized ids,
                 'x_cat_input_ids': tensor contains categorical column + feature ids,
@@ -170,7 +176,7 @@ class TransTabFeatureExtractor:
 
         if len(bin_cols) > 0:
             x_bin = x[bin_cols] # x_bin should already be integral (binary values in 0 & 1)
-            x_bin_str = x_bin.apply(lambda x: x.name + '') * x_bin
+            x_bin_str = x_bin.apply(lambda x: x.name + ' ') * x_bin
             x_bin_str = x_bin_str.agg(' '.join, axis=1).values.tolist()
             x_bin_ts = self.tokenizer(x_bin_str, padding=True, truncation=True, add_special_tokens=False, return_tensors='pt')
             if x_bin_ts['input_ids'].shape[1] > 0: # not all false
@@ -206,7 +212,7 @@ class TransTabFeatureExtractor:
         tokenizer_path = os.path.join(path, constants.TOKENIZER_DIR)
         coltype_path = os.path.join(path, constants.EXTRACTOR_STATE_NAME)
 
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+        self.tokenizer = BertTokenizerFast.from_pretrained(tokenizer_path)
         with open(coltype_path, 'r', encoding='utf-8') as f:
             col_type_dict = json.loads(f.read())
 
@@ -447,6 +453,77 @@ class TransTabTransformerLayer(nn.Module):
                 x = x + self._ff_block(x)
         return x
 
+class TransTabInputEncoder(nn.Module):
+    '''
+    Build a feature encoder that maps inputs tabular samples to embeddings.
+    
+    Parameters:
+    -----------
+    categorical_columns: list 
+        a list of categorical feature names.
+
+    numerical_columns: list
+        a list of numerical feature names.
+
+    binary_columns: list
+        a list of binary feature names, accept binary indicators like (yes,no); (true,false); (0,1).
+
+    ignore_duplicate_cols: bool
+        if there is one column assigned to more than one type, e.g., the feature age is both nominated
+        as categorical and binary columns, the model will raise errors. set True to avoid this error as 
+        the model will ignore this duplicate feature.
+
+    disable_tokenizer_parallel: bool
+        if the returned feature extractor is leveraged by the collate function for a dataloader,
+        try to set this False in case the dataloader raises errors because the dataloader builds 
+        multiple workers and the tokenizer builds multiple workers at the same time.
+
+    hidden_dim: int
+        the dimension of hidden embeddings.
+
+    hidden_dropout_prob: float
+        the dropout ratio in the transformer encoder.
+    
+    device: str
+        the device, ``"cpu"`` or ``"cuda:0"``.
+
+    '''
+    def __init__(self,
+        feature_extractor,
+        feature_processor,
+        device='cuda:0',
+        ):
+        super().__init__()
+        self.feature_extractor = feature_extractor
+        self.feature_processor = feature_processor
+        self.device = device
+        self.to(device)
+
+    def forward(self, x):
+        '''
+        Encode input tabular samples into embeddings.
+
+        Parameters
+        ----------
+        x: pd.DataFrame
+            with column names and features.        
+        '''
+        tokenized = self.feature_extractor(x)
+        embeds = self.feature_processor(**tokenized)
+        return embeds
+    
+    def load(self, ckpt_dir):
+        # load feature extractor
+        self.feature_extractor.load(os.path.join(ckpt_dir, constants.EXTRACTOR_STATE_DIR))
+
+        # load embedding layer
+        model_name = os.path.join(ckpt_dir, constants.INPUT_ENCODER_NAME)
+        state_dict = torch.load(model_name, map_location='cpu')
+        missing_keys, unexpected_keys = self.load_state_dict(state_dict, strict=False)
+        logger.info(f'missing keys: {missing_keys}')
+        logger.info(f'unexpected keys: {unexpected_keys}')
+        logger.info(f'load model from {ckpt_dir}')
+
 class TransTabEncoder(nn.Module):
     def __init__(self,
         hidden_dim=128,
@@ -460,16 +537,15 @@ class TransTabEncoder(nn.Module):
         self.transformer_encoder = nn.ModuleList(
             [
             TransTabTransformerLayer(
-            d_model=hidden_dim,
-            nhead=num_attention_head,
-            dropout=hidden_dropout_prob,
-            dim_feedforward=ffn_dim,
-            batch_first=True,
-            layer_norm_eps=1e-5,
-            norm_first=False,
-            use_layer_norm=True,
-            activation=activation,
-            )
+                d_model=hidden_dim,
+                nhead=num_attention_head,
+                dropout=hidden_dropout_prob,
+                dim_feedforward=ffn_dim,
+                batch_first=True,
+                layer_norm_eps=1e-5,
+                norm_first=False,
+                use_layer_norm=True,
+                activation=activation,)
             ]
             )
         if num_layer > 1:
@@ -589,7 +665,6 @@ class TransTabModel(nn.Module):
     A TransTabModel model.
 
     '''
-
     def __init__(self,
         categorical_columns=None,
         numerical_columns=None,
@@ -617,21 +692,24 @@ class TransTabModel(nn.Module):
             self.binary_columns = list(set(binary_columns))
 
         if feature_extractor is None:
-            self.feature_extractor = TransTabFeatureExtractor(
+            feature_extractor = TransTabFeatureExtractor(
                 categorical_columns=self.categorical_columns,
                 numerical_columns=self.numerical_columns,
                 binary_columns=self.binary_columns,
                 **kwargs,
             )
-        else:
-            self.feature_extractor = feature_extractor
 
-        self.feature_processor = TransTabFeatureProcessor(
-            vocab_size=self.feature_extractor.vocab_size,
-            pad_token_id=self.feature_extractor.pad_token_id,
+        feature_processor = TransTabFeatureProcessor(
+            vocab_size=feature_extractor.vocab_size,
+            pad_token_id=feature_extractor.pad_token_id,
             hidden_dim=hidden_dim,
             hidden_dropout_prob=hidden_dropout_prob,
             device=device,
+            )
+        
+        self.input_encoder = TransTabInputEncoder(
+            feature_extractor=feature_extractor,
+            feature_processor=feature_processor
             )
 
         self.encoder = TransTabEncoder(
@@ -664,13 +742,11 @@ class TransTabModel(nn.Module):
             the [CLS] embedding at the end of transformer encoder.
 
         '''
-
-        inputs = self.feature_extractor(x)
-        outputs = self.feature_processor(**inputs)
-        outputs = self.cls_token(**outputs)
+        embeded = self.input_encoder(x)
+        embeded = self.cls_token(**embeded)
 
         # go through transformers, get final cls embedding
-        encoder_output = self.encoder(**outputs)
+        encoder_output = self.encoder(**embeded)
 
         # get cls token
         final_cls_embedding = encoder_output[:,0,:]
@@ -699,7 +775,7 @@ class TransTabModel(nn.Module):
         logger.info(f'load model from {ckpt_dir}')
 
         # load feature extractor
-        self.feature_extractor.load(os.path.join(ckpt_dir, constants.EXTRACTOR_STATE_DIR))
+        self.input_encoder.feature_extractor.load(os.path.join(ckpt_dir, constants.EXTRACTOR_STATE_DIR))
 
     def save(self, ckpt_dir):
         '''Save the model state_dict and feature_extractor configuration
@@ -719,9 +795,12 @@ class TransTabModel(nn.Module):
         if not os.path.exists(ckpt_dir): os.makedirs(ckpt_dir, exist_ok=True)
         state_dict = self.state_dict()
         torch.save(state_dict, os.path.join(ckpt_dir, constants.WEIGHTS_NAME))
-        if self.feature_extractor is not None:
-            self.feature_extractor.save(ckpt_dir)
+        if self.input_encoder.feature_extractor is not None:
+            self.input_encoder.feature_extractor.save(ckpt_dir)
 
+        # save the input encoder separately
+        state_dict_input_encoder = self.input_encoder.state_dict()
+        torch.save(state_dict_input_encoder, os.path.join(ckpt_dir, constants.INPUT_ENCODER_NAME))
         return None
 
     def update(self, config):
@@ -744,7 +823,7 @@ class TransTabModel(nn.Module):
         for k,v in config.items():
             if k in ['cat','num','bin']: col_map[k] = v
 
-        self.feature_extractor.update(**col_map)
+        self.input_encoder.feature_extractor.update(**col_map)
 
         if 'num_class' in config:
             num_class = config['num_class']
@@ -887,11 +966,11 @@ class TransTabClassifier(TransTabModel):
             inputs = x
         elif isinstance(x, pd.DataFrame):
             # input is dataframe
-            inputs = self.feature_extractor(x)
+            inputs = self.input_encoder.feature_extractor(x)
         else:
             raise ValueError(f'TransTabClassifier takes inputs with dict or pd.DataFrame, find {type(x)}.')
 
-        outputs = self.feature_processor(**inputs)
+        outputs = self.input_encoder.feature_processor(**inputs)
         outputs = self.cls_token(**outputs)
 
         # go through transformers, get the first cls embedding
@@ -1049,8 +1128,7 @@ class TransTabForCL(TransTabModel):
             sub_x_list = self._build_positive_pairs(x, self.num_partition)
             for sub_x in sub_x_list:
                 # encode two subset feature samples
-                inputs = self.feature_extractor(sub_x)
-                feat_x = self.feature_processor(**inputs)
+                feat_x = self.input_encoder(sub_x)
                 feat_x = self.cls_token(**feat_x)
                 feat_x = self.encoder(**feat_x)
                 feat_x_proj = feat_x[:,0,:] # take cls embedding
@@ -1059,8 +1137,7 @@ class TransTabForCL(TransTabModel):
         elif isinstance(x, dict):
             # pretokenized inputs
             for input_x in x['input_sub_x']:
-                feat_x = self.feature_processor(**input_x)
-                feat_x = self.cls_token(**feat_x)
+                feat_x = self.input_encoder.feature_processor(**input_x)
                 feat_x = self.encoder(**feat_x)
                 feat_x_proj = feat_x[:, 0, :]
                 feat_x_proj = self.projection_head(feat_x_proj)

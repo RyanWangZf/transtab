@@ -2,8 +2,9 @@ import pdb
 import os
 
 from . import constants
-from .modeling_transtab import TransTabClassifier, TransTabFeatureExtractor
+from .modeling_transtab import TransTabClassifier, TransTabFeatureExtractor, TransTabFeatureProcessor
 from .modeling_transtab import TransTabForCL
+from .modeling_transtab import TransTabInputEncoder, TransTabModel
 from .dataset import load_data
 from .evaluator import predict, evaluate
 from .trainer import Trainer
@@ -145,7 +146,99 @@ def build_extractor(
             feature_extractor.load(extractor_path)
         else:
             feature_extractor.load(checkpoint)
-    return feature_extractor    
+    return feature_extractor
+
+def build_encoder(
+    categorical_columns=None,
+    numerical_columns=None,
+    binary_columns=None,
+    hidden_dim=128,
+    num_layer=2,
+    num_attention_head=8,
+    hidden_dropout_prob=0,
+    ffn_dim=256,
+    activation='relu',
+    device='cuda:0',
+    checkpoint=None,
+    ):
+    '''
+    Build a feature encoder that maps inputs tabular samples to embeddings.
+    
+    Parameters
+    ----------
+    categorical_columns: list 
+        a list of categorical feature names.
+
+    numerical_columns: list
+        a list of numerical feature names.
+
+    binary_columns: list
+        a list of binary feature names, accept binary indicators like (yes,no); (true,false); (0,1).
+    
+    hidden_dim: int
+        the dimension of hidden embeddings.
+    
+    num_layer: int
+        the number of transformer layers used in the encoder. If set zero, only use the
+        embedding layer to get token-level embeddings.
+    
+    num_attention_head: int
+        the numebr of heads of multihead self-attention layer in the transformers.
+        Ignored if `num_layer=0` is zero.
+
+    hidden_dropout_prob: float
+        the dropout ratio in the transformer encoder.
+        Ignored if `num_layer=0` is zero.
+
+    ffn_dim: int
+        the dimension of feed-forward layer in the transformer layer.
+        Ignored if `num_layer=0` is zero.
+
+    activation: str
+        the name of used activation functions, support ``"relu"``, ``"gelu"``, ``"selu"``, ``"leakyrelu"``.
+        Ignored if `num_layer=0` is zero.
+    
+    device: str
+        the device, ``"cpu"`` or ``"cuda:0"``.
+    
+    checkpoint: str
+        the directory to load the pretrained TransTab model.
+    '''
+    if num_layer == 0:
+        feature_extractor = TransTabFeatureExtractor(
+            categorical_columns=categorical_columns,
+            numerical_columns=numerical_columns,
+            binary_columns=binary_columns,
+            )
+        
+        feature_processor = TransTabFeatureProcessor(
+            vocab_size=feature_extractor.vocab_size,
+            pad_token_id=feature_extractor.pad_token_id,
+            hidden_dim=hidden_dim,
+            hidden_dropout_prob=hidden_dropout_prob,
+            device=device,
+            )
+
+        enc = TransTabInputEncoder(feature_extractor, feature_processor)
+        enc.load(checkpoint)
+        
+    else:
+        enc = TransTabModel(
+            categorical_columns=categorical_columns,
+            numerical_columns=numerical_columns,
+            binary_columns=binary_columns,
+            hidden_dim=hidden_dim,
+            num_layer=num_layer,
+            num_attention_head=num_attention_head,
+            hidden_dropout_prob=hidden_dropout_prob,
+            ffn_dim=ffn_dim,
+            activation=activation,
+            device=device,
+            )
+        if checkpoint is not None:
+            enc.load(checkpoint)
+
+    return enc
 
 def build_contrastive_learner(
     categorical_columns=None,
@@ -272,7 +365,6 @@ def build_contrastive_learner(
         collate_fn.feature_extractor.load(os.path.join(checkpoint, constants.EXTRACTOR_STATE_DIR))
 
     return model, collate_fn
-
 
 def train(model, 
     trainset, 
