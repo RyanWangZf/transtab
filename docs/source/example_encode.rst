@@ -1,8 +1,7 @@
 Encode Tables
 =============
 
-*transtab* is able to leverage the knowledge learned from broad data sources than finetunes on the target
-data. It is also easy to fulfill it by this package.
+*transtab* is able to take pd.DataFrame as inputs and outputs the encoded sample-level embeddings.
 The full code is available at `Notebook Example <https://github.com/ryanwangzf/transtab/blob/master/examples/table_embedding.ipynb>`_.
 
 
