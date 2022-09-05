@@ -67,9 +67,13 @@ class Trainer:
         self.trainloader_list = [
             self._build_dataloader(trainset, batch_size, collator=self.collate_fn, num_workers=num_workers) for trainset in train_set_list
         ]
-        self.testloader_list = [
-            self._build_dataloader(testset, eval_batch_size, collator=self.collate_fn, num_workers=num_workers, shuffle=False) for testset in test_set_list
-        ]
+        if test_set_list is not None:
+            self.testloader_list = [
+                self._build_dataloader(testset, eval_batch_size, collator=self.collate_fn, num_workers=num_workers, shuffle=False) for testset in test_set_list
+            ]
+        else:
+            self.testloader_list = None
+            
         self.test_set_list = test_set_list
         self.output_dir = output_dir
         self.early_stopping = EarlyStopping(output_dir=output_dir, patience=patience, verbose=False, less_is_better=eval_less_is_better)
