@@ -101,7 +101,8 @@ def build_extractor(
     binary_columns=None,
     ignore_duplicate_cols=False,
     disable_tokenizer_parallel=False,
-    checkpoint=None) -> TransTabFeatureExtractor:
+    checkpoint=None,
+    **kwargs,) -> TransTabFeatureExtractor:
     '''Build a feature extractor for TransTab model.
 
     Parameters
@@ -160,6 +161,7 @@ def build_encoder(
     activation='relu',
     device='cuda:0',
     checkpoint=None,
+    **kwargs,
     ):
     '''
     Build a feature encoder that maps inputs tabular samples to embeddings.
@@ -257,6 +259,7 @@ def build_contrastive_learner(
     device='cuda:0',
     checkpoint=None,
     ignore_duplicate_cols=True,
+    **kwargs,
     ): 
     '''Build a contrastive learner for pretraining based on TransTab.
     If no cat/num/bin specified, the model takes ALL as categorical columns,
@@ -385,6 +388,7 @@ def train(model,
     load_best_at_last=True,
     ignore_duplicate_cols=False,
     eval_less_is_better=False,
+    **kwargs,
     ):
     '''
     The shared train function for all TransTabModel based models.
