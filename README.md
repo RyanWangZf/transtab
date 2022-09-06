@@ -1,9 +1,11 @@
-# TransTab: A flexible tabular prediction model [[arxiv]](https://arxiv.org/pdf/2205.09328.pdf)
+# TransTab: A flexible transferable tabular learning framework [[arxiv]](https://arxiv.org/pdf/2205.09328.pdf)
 
 
 [![PyPI version](https://badge.fury.io/py/transtab.svg)](https://badge.fury.io/py/transtab)
 [![Documentation Status](https://readthedocs.org/projects/transtab/badge/?version=latest)](https://transtab.readthedocs.io/en/latest/?badge=latest)
 [![License](https://img.shields.io/badge/License-BSD_2--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
+![GitHub Repo stars](https://img.shields.io/github/stars/ryanwangzf/transtab)
+![GitHub Repo forks](https://img.shields.io/github/forks/ryanwangzf/transtab)
 [![Downloads](https://pepy.tech/badge/transtab)](https://pepy.tech/project/transtab)
 [![Downloads](https://pepy.tech/badge/transtab/month)](https://pepy.tech/project/transtab)
 
