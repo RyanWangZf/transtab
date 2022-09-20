@@ -117,3 +117,7 @@ If you find this package useful, please consider citing the following paper:
 	year = {2022},
 }
 ```
+
+## TODO
+
+- Add support to direct process table with missing values.
