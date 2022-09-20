@@ -16,6 +16,14 @@ Document is available at https://transtab.readthedocs.io/en/latest/index.html.
 ### News!
 - [08/31/22] `0.0.2` Support encode tabular inputs into embeddings directly. An example is provided [here](examples/table_embedding.ipynb). Several bugs are fixed.
 
+## TODO
+
+- [x] Table embedding.
+
+- [ ] Add support to direct process table with missing values.
+
+- [ ] Add regression support.
+
 ### Features
 This repository provides the python package `transtab` for flexible tabular prediction model. The basic usage of `transtab` can be done in a couple of lines!
 
@@ -110,14 +118,10 @@ transtab.train(model, trainset, valset, collate_fn=collate_fn, **training_argume
 If you find this package useful, please consider citing the following paper:
 
 ```latex
-@article{wang2022transtab,
-	title = {TransTab: Learning Transferable Tabular Transformers Across Tables},
-	author = {Wang, Zifeng and Sun, Jimeng},
-     journal={arXiv preprint arXiv:2205.09328},
-	year = {2022},
+@article{wang2020transtab,
+  title={TransTab: Learning Transferable Tabular Transformers Across Tables},
+  author={Wang, Zifeng and Sun, Jimeng},
+  journal={Advances in Neural Information Processing Systems},
+  year={2022}
 }
 ```
-
-## TODO
-
-- Add support to direct process table with missing values.
