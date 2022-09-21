@@ -118,10 +118,10 @@ transtab.train(model, trainset, valset, collate_fn=collate_fn, **training_argume
 If you find this package useful, please consider citing the following paper:
 
 ```latex
-@article{wang2020transtab,
+@inproceedings{wang2020transtab,
   title={TransTab: Learning Transferable Tabular Transformers Across Tables},
   author={Wang, Zifeng and Sun, Jimeng},
-  journal={Advances in Neural Information Processing Systems},
+  booktitle={Advances in Neural Information Processing Systems},
   year={2022}
 }
 ```
