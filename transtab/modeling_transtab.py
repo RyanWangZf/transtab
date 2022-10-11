@@ -709,7 +709,8 @@ class TransTabModel(nn.Module):
         
         self.input_encoder = TransTabInputEncoder(
             feature_extractor=feature_extractor,
-            feature_processor=feature_processor
+            feature_processor=feature_processor,
+            device=device,
             )
 
         self.encoder = TransTabEncoder(
