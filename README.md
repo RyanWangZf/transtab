@@ -12,6 +12,7 @@
 
 Document is available at https://transtab.readthedocs.io/en/latest/index.html.
 
+Paper is available at https://arxiv.org/pdf/2205.09328.pdf.
 
 ### News!
 - [08/31/22] `0.0.2` Support encode tabular inputs into embeddings directly. An example is provided [here](examples/table_embedding.ipynb). Several bugs are fixed.
