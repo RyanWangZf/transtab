@@ -14,7 +14,11 @@ Document is available at https://transtab.readthedocs.io/en/latest/index.html.
 
 Paper is available at https://arxiv.org/pdf/2205.09328.pdf.
 
+5 min blog to understand TransTab at [realsunlab.medium.com](https://realsunlab.medium.com/transtab-learning-transferable-tabular-transformers-across-tables-1e34eec161b8)!
+
 ### News!
+- [12/03/22] Check out our [[blog]](https://realsunlab.medium.com/transtab-learning-transferable-tabular-transformers-across-tables-1e34eec161b8) for a quick understanding of TransTab!
+
 - [08/31/22] `0.0.2` Support encode tabular inputs into embeddings directly. An example is provided [here](examples/table_embedding.ipynb). Several bugs are fixed.
 
 ## TODO
