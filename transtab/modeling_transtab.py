@@ -1139,6 +1139,7 @@ class TransTabForCL(TransTabModel):
             # pretokenized inputs
             for input_x in x['input_sub_x']:
                 feat_x = self.input_encoder.feature_processor(**input_x)
+                feat_x = self.cls_token(**feat_x)
                 feat_x = self.encoder(**feat_x)
                 feat_x_proj = feat_x[:, 0, :]
                 feat_x_proj = self.projection_head(feat_x_proj)
