@@ -777,6 +777,9 @@ class TransTabModel(nn.Module):
 
         # load feature extractor
         self.input_encoder.feature_extractor.load(os.path.join(ckpt_dir, constants.EXTRACTOR_STATE_DIR))
+        self.binary_columns = self.input_encoder.feature_extractor.binary_columns
+        self.categorical_columns = self.input_encoder.feature_extractor.categorical_columns
+        self.numerical_columns = self.input_encoder.feature_extractor.numerical_columns
 
     def save(self, ckpt_dir):
         '''Save the model state_dict and feature_extractor configuration
@@ -825,6 +828,9 @@ class TransTabModel(nn.Module):
             if k in ['cat','num','bin']: col_map[k] = v
 
         self.input_encoder.feature_extractor.update(**col_map)
+        self.binary_columns = self.input_encoder.feature_extractor.binary_columns
+        self.categorical_columns = self.input_encoder.feature_extractor.categorical_columns
+        self.numerical_columns = self.input_encoder.feature_extractor.numerical_columns
 
         if 'num_class' in config:
             num_class = config['num_class']

@@ -65,30 +65,34 @@ def predict(clf,
     else:
         return pred_all
 
-def evaluate(ypred, y_test, metric='auc', seed=123):
+def evaluate(ypred, y_test, metric='auc', seed=123, bootstrap=False):
     np.random.seed(seed)
     eval_fn = get_eval_metric_fn(metric)
-    auc_list = []
+    res_list = []
     stats_dict = defaultdict(list)
-    for i in range(10):
-        sub_idx = np.random.choice(np.arange(len(ypred)), len(ypred), replace=True)
-        sub_ypred = ypred[sub_idx]
-        sub_ytest = y_test.iloc[sub_idx]
-        try:
-            sub_res = eval_fn(sub_ytest, sub_ypred)
-        except ValueError:
-            print('evaluation went wrong!')
-        stats_dict[metric].append(sub_res)
-    for key in stats_dict.keys():
-        stats = stats_dict[key]
-        alpha = 0.95
-        p = ((1-alpha)/2) * 100
-        lower = max(0, np.percentile(stats, p))
-        p = (alpha+((1.0-alpha)/2.0)) * 100
-        upper = min(1.0, np.percentile(stats, p))
-        print('{} {:.2f} mean/interval {:.4f}({:.2f})'.format(key, alpha, (upper+lower)/2, (upper-lower)/2))
-        if key == metric: auc_list.append((upper+lower)/2)
-    return auc_list
+    if bootstrap:
+        for i in range(10):
+            sub_idx = np.random.choice(np.arange(len(ypred)), len(ypred), replace=True)
+            sub_ypred = ypred[sub_idx]
+            sub_ytest = y_test.iloc[sub_idx]
+            try:
+                sub_res = eval_fn(sub_ytest, sub_ypred)
+            except ValueError:
+                print('evaluation went wrong!')
+            stats_dict[metric].append(sub_res)
+        for key in stats_dict.keys():
+            stats = stats_dict[key]
+            alpha = 0.95
+            p = ((1-alpha)/2) * 100
+            lower = max(0, np.percentile(stats, p))
+            p = (alpha+((1.0-alpha)/2.0)) * 100
+            upper = min(1.0, np.percentile(stats, p))
+            print('{} {:.2f} mean/interval {:.4f}({:.2f})'.format(key, alpha, (upper+lower)/2, (upper-lower)/2))
+            if key == metric: res_list.append((upper+lower)/2)
+    else:
+        res = eval_fn(y_test, ypred)
+        res_list.append(res)
+    return res_list
 
 def get_eval_metric_fn(eval_metric):
     fn_dict = {
