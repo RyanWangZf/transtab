@@ -834,9 +834,7 @@ class TransTabModel(nn.Module):
 
         if 'num_class' in config:
             num_class = config['num_class']
-            self.clf = TransTabLinearClassifier(num_class, hidden_dim=self.cls_token.hidden_dim)
-            self.clf.to(self.device)
-            logger.info(f'Build a new classifier with num {num_class} classes outputs, need further finetune to work.')
+            self._adapt_to_new_num_class(num_class)
 
         return None
 
@@ -862,6 +860,17 @@ class TransTabModel(nn.Module):
             if col in self.binary_columns:
                 self.binary_columns.remove(col)
                 self.binary_columns.append(f'[bin]{col}')
+
+    def _adapt_to_new_num_class(self, num_class):
+        if num_class != self.num_class:
+            self.num_class = num_class
+            self.clf = TransTabLinearClassifier(num_class, hidden_dim=self.cls_token.hidden_dim)
+            self.clf.to(self.device)
+            if self.num_class > 2:
+                self.loss_fn = nn.CrossEntropyLoss(reduction='none')
+            else:
+                self.loss_fn = nn.BCEWithLogitsLoss(reduction='none')
+            logger.info(f'Build a new classifier with num {num_class} classes outputs, need further finetune to work.')
 
 
 class TransTabClassifier(TransTabModel):

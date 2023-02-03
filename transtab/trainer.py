@@ -147,7 +147,11 @@ class Trainer:
         for dataindex in range(len(self.testloader_list)):
             y_test, pred_list, loss_list = [], [], []
             for data in self.testloader_list[dataindex]:
-                y_test.append(data[1])
+                if data[1] is not None:
+                    label = data[1]
+                    if isinstance(label, pd.Series):
+                        label = label.values
+                    y_test.append(label)
                 with torch.no_grad():
                     logits, loss = self.model(data[0], data[1])
                 if loss is not None:
@@ -166,7 +170,7 @@ class Trainer:
             if self.args['eval_metric_name'] == 'val_loss':
                 eval_res = np.mean(loss_list)
             else:
-                y_test = pd.concat(y_test, 0)
+                y_test = np.concatenate(y_test, 0)
                 eval_res = self.args['eval_metric'](y_test, pred_all)
 
             eval_res_list.append(eval_res)
