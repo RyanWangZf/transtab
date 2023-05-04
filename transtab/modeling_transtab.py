@@ -588,6 +588,22 @@ class TransTabLinearClassifier(nn.Module):
         logits = self.fc(x)
         return logits
 
+
+class TransTabLinearRegressor(nn.Module):
+    def __init__(self,
+        hidden_dim=128) -> None:
+        super().__init__()
+        self.fc = nn.Linear(hidden_dim, 1)
+        self.norm = nn.LayerNorm(hidden_dim)
+
+    def forward(self, x) -> Tensor:
+        x = x[:,0,:] # take the cls token embedding
+        x = self.norm(x)
+        prediction = self.fc(x)
+        return prediction
+
+
+
 class TransTabProjectionHead(nn.Module):
     def __init__(self,
         hidden_dim=128,
