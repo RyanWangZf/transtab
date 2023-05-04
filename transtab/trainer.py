@@ -38,7 +38,7 @@ class Trainer:
         balance_sample=False,
         load_best_at_last=True,
         ignore_duplicate_cols=False,
-        objective=None, ##todo
+        #objective=None, ##todo
         eval_metric='auc',
         eval_less_is_better=False,
         num_workers=0,
@@ -87,7 +87,7 @@ class Trainer:
             'warmup_ratio': warmup_ratio,
             'warmup_steps': warmup_steps,
             'num_training_steps': self.get_num_train_steps(train_set_list, num_epoch, batch_size),
-            'objective': objective, ##todo
+            #'objective': objective, ##todo
             'eval_metric': get_eval_metric_fn(eval_metric),
             'eval_metric_name': eval_metric,
             }
@@ -98,13 +98,12 @@ class Trainer:
         self.lr_scheduler = None
         self.balance_sample = balance_sample
         self.load_best_at_last = load_best_at_last
-        
 
-    def train(self, objective=None, **kwargs):
+    def train(self, objective=None):
         args = self.args 
-        if objective is not None:
-            args['objective'] = objective
-        print(args['objective'])
+        #if objective is not None:
+          #  args['objective'] = objective
+        print(objective)
 
         self.create_optimizer()
         if args['warmup_ratio'] is not None or args['warmup_steps'] is not None:
