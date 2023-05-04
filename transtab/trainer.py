@@ -38,7 +38,7 @@ class Trainer:
         balance_sample=False,
         load_best_at_last=True,
         ignore_duplicate_cols=False,
-        objective='classification', ##todo
+        objective=None, ##todo
         eval_metric='auc',
         eval_less_is_better=False,
         num_workers=0,
@@ -98,7 +98,7 @@ class Trainer:
         self.lr_scheduler = None
         self.balance_sample = balance_sample
         self.load_best_at_last = load_best_at_last
-        self.objective = objective
+        self.objective = objective ##todo
         print(objective)
         print(self.objective)
 
@@ -110,8 +110,9 @@ class Trainer:
             logger.info(f'set warmup training in initial {num_train_steps} steps')
             self.create_scheduler(num_train_steps, self.optimizer)
         
-        print(args['objective'])
-        if args['objective']=='classification':
+        objective = self.objective
+        print(objective)
+        if objective=='classification':
             start_time = time.time()
             for epoch in trange(args['num_epoch'], desc='Epoch'):
                 ite = 0
