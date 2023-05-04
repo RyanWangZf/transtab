@@ -104,6 +104,7 @@ class Trainer:
         args = self.args 
         if objective is not None:
             args['objective'] = objective
+            print(args['objective'])
 
         self.create_optimizer()
         if args['warmup_ratio'] is not None or args['warmup_steps'] is not None:
@@ -111,7 +112,6 @@ class Trainer:
             logger.info(f'set warmup training in initial {num_train_steps} steps')
             self.create_scheduler(num_train_steps, self.optimizer)
         
-        print(args['objective'])
         if (args['objective']=='classification'):
             start_time = time.time()
             for epoch in trange(args['num_epoch'], desc='Epoch'):
