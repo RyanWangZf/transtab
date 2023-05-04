@@ -107,7 +107,7 @@ class Trainer:
             logger.info(f'set warmup training in initial {num_train_steps} steps')
             self.create_scheduler(num_train_steps, self.optimizer)
 
-        if args['objectvive']=='classification':
+        if args['objective']=='classification':
             start_time = time.time()
             for epoch in trange(args['num_epoch'], desc='Epoch'):
                 ite = 0
