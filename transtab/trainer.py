@@ -38,7 +38,7 @@ class Trainer:
         balance_sample=False,
         load_best_at_last=True,
         ignore_duplicate_cols=False,
-        #objective=None, ##todo
+        objective=None, ##todo
         eval_metric='auc',
         eval_less_is_better=False,
         num_workers=0,
@@ -52,6 +52,9 @@ class Trainer:
         eval_less_is_better: if the set eval_metric is the less the better. For val_loss, it should be set True.
         '''
         self.model = model
+        self.objective = objective
+        print(self.objective)
+        
         if isinstance(train_set_list, tuple): train_set_list = [train_set_list]
         if isinstance(test_set_list, tuple): test_set_list = [test_set_list]
 
@@ -99,11 +102,9 @@ class Trainer:
         self.balance_sample = balance_sample
         self.load_best_at_last = load_best_at_last
 
-    def train(self, objective=None):
+    def train(self):
         args = self.args 
-        #if objective is not None:
-          #  args['objective'] = objective
-        print(objective)
+        print(self.objective)
 
         self.create_optimizer()
         if args['warmup_ratio'] is not None or args['warmup_steps'] is not None:
@@ -111,7 +112,7 @@ class Trainer:
             logger.info(f'set warmup training in initial {num_train_steps} steps')
             self.create_scheduler(num_train_steps, self.optimizer)
         
-        if (args['objective']=='classification'):
+        if (self.objective=='classification'):
             start_time = time.time()
             for epoch in trange(args['num_epoch'], desc='Epoch'):
                 ite = 0
