@@ -23,7 +23,6 @@ from .trainer_utils import get_scheduler
 class Trainer:
     def __init__(self,
         model,
-        objective, ##todo
         train_set_list,
         test_set_list=None,
         collate_fn=None,
@@ -39,6 +38,7 @@ class Trainer:
         balance_sample=False,
         load_best_at_last=True,
         ignore_duplicate_cols=False,
+        objective=None, ##todo
         eval_metric='auc',
         eval_less_is_better=False,
         num_workers=0,
@@ -52,11 +52,6 @@ class Trainer:
         eval_less_is_better: if the set eval_metric is the less the better. For val_loss, it should be set True.
         '''
         self.model = model
-        self.objective = objective
-        #self.objective = objective ##todo
-        print(objective)
-        #print(self.args['objective'])
-
         if isinstance(train_set_list, tuple): train_set_list = [train_set_list]
         if isinstance(test_set_list, tuple): test_set_list = [test_set_list]
 
@@ -92,7 +87,7 @@ class Trainer:
             'warmup_ratio': warmup_ratio,
             'warmup_steps': warmup_steps,
             'num_training_steps': self.get_num_train_steps(train_set_list, num_epoch, batch_size),
-            #'objective': objective, ##todo
+            'objective': objective, ##todo
             'eval_metric': get_eval_metric_fn(eval_metric),
             'eval_metric_name': eval_metric,
             }
@@ -105,15 +100,19 @@ class Trainer:
         self.load_best_at_last = load_best_at_last
         
 
-    def train(self):
-        args = self.args
+    def train(self, objective=None, **kwargs):
+        args = self.args 
+        if objective is not None:
+            args['objective'] = objective
+
         self.create_optimizer()
         if args['warmup_ratio'] is not None or args['warmup_steps'] is not None:
             num_train_steps = args['num_training_steps']
             logger.info(f'set warmup training in initial {num_train_steps} steps')
             self.create_scheduler(num_train_steps, self.optimizer)
+        
         print(args['objective'])
-        if objective=='classification':
+        if (args['objective']=='classification'):
             start_time = time.time()
             for epoch in trange(args['num_epoch'], desc='Epoch'):
                 ite = 0
