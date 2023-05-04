@@ -23,6 +23,7 @@ from .trainer_utils import get_scheduler
 class Trainer:
     def __init__(self,
         model,
+        objective, ##todo
         train_set_list,
         test_set_list=None,
         collate_fn=None,
@@ -38,7 +39,6 @@ class Trainer:
         balance_sample=False,
         load_best_at_last=True,
         ignore_duplicate_cols=False,
-        objective=None, ##todo
         eval_metric='auc',
         eval_less_is_better=False,
         num_workers=0,
@@ -52,6 +52,11 @@ class Trainer:
         eval_less_is_better: if the set eval_metric is the less the better. For val_loss, it should be set True.
         '''
         self.model = model
+        self.objective = objective
+        #self.objective = objective ##todo
+        print(objective)
+        #print(self.args['objective'])
+
         if isinstance(train_set_list, tuple): train_set_list = [train_set_list]
         if isinstance(test_set_list, tuple): test_set_list = [test_set_list]
 
@@ -87,7 +92,7 @@ class Trainer:
             'warmup_ratio': warmup_ratio,
             'warmup_steps': warmup_steps,
             'num_training_steps': self.get_num_train_steps(train_set_list, num_epoch, batch_size),
-            'objective': objective, ##todo
+            #'objective': objective, ##todo
             'eval_metric': get_eval_metric_fn(eval_metric),
             'eval_metric_name': eval_metric,
             }
@@ -99,9 +104,6 @@ class Trainer:
         self.balance_sample = balance_sample
         self.load_best_at_last = load_best_at_last
         
-        #self.objective = objective ##todo
-        #print(objective)
-        print(self.args['objective'])
 
     def train(self):
         args = self.args
