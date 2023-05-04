@@ -87,7 +87,7 @@ class Trainer:
             'warmup_ratio': warmup_ratio,
             'warmup_steps': warmup_steps,
             'num_training_steps': self.get_num_train_steps(train_set_list, num_epoch, batch_size),
-            'objective':objective, ##todo
+            'objective': objective, ##todo
             'eval_metric': get_eval_metric_fn(eval_metric),
             'eval_metric_name': eval_metric,
             }
@@ -98,7 +98,8 @@ class Trainer:
         self.lr_scheduler = None
         self.balance_sample = balance_sample
         self.load_best_at_last = load_best_at_last
-
+        print(self.args['objective'])
+        
     def train(self):
         args = self.args
         self.create_optimizer()
