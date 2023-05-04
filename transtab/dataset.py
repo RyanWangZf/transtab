@@ -20,7 +20,7 @@ OPENML_DATACONFIG = {
     'credit-g': {'bin': ['own_telephone', 'foreign_worker']},
 }
 
-def load_data(dataname, dataset_config=None, encode_cat=False, data_cut=None, seed=123, shuffle=True):
+def load_data(dataname, dataset_config=None, encode_cat=False, data_cut=None, seed=123, shuffle=True, stratify=True):
     '''Load datasets from the local device or from openml.datasets.
 
     Parameters
@@ -68,7 +68,7 @@ def load_data(dataname, dataset_config=None, encode_cat=False, data_cut=None, se
     if dataset_config is None: dataset_config = OPENML_DATACONFIG
     if isinstance(dataname, str):
         # load a single tabular data
-        return load_single_data(dataname=dataname, dataset_config=dataset_config, encode_cat=encode_cat, data_cut=data_cut, seed=seed, shuffle=shuffle)
+        return load_single_data(dataname=dataname, dataset_config=dataset_config, encode_cat=encode_cat, data_cut=data_cut, seed=seed, shuffle=shuffle, stratify=stratify)
     
     if isinstance(dataname, list):
         # load a list of datasets, combine together and outputs
@@ -77,7 +77,7 @@ def load_data(dataname, dataset_config=None, encode_cat=False, data_cut=None, se
         train_list, val_list, test_list = [], [], []
         for dataname_ in dataname:
             allset, trainset, valset, testset, cat_cols, num_cols, bin_cols = \
-                load_single_data(dataname_, dataset_config=dataset_config, encode_cat=encode_cat, data_cut=data_cut, seed=seed, shuffle=shuffle)
+                load_single_data(dataname_, dataset_config=dataset_config, encode_cat=encode_cat, data_cut=data_cut, seed=seed, shuffle=shuffle, stratify=stratify)
             num_col_list.extend(num_cols)
             cat_col_list.extend(cat_cols)
             bin_col_list.extend(bin_cols)
@@ -87,7 +87,7 @@ def load_data(dataname, dataset_config=None, encode_cat=False, data_cut=None, se
             test_list.append(testset)
         return all_list, train_list, val_list, test_list, cat_col_list, num_col_list, bin_col_list
 
-def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=None, seed=123, shuffle=True):
+def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=None, seed=123, stratify=True, shuffle=True):
     '''Load tabular dataset from local or from openml public database.
     args:
         dataname: Can either be the data directory on `./data/{dataname}` or the dataname which can be found from the openml database.
@@ -215,7 +215,11 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
             num_cols = data_config['num']
 
     # split train/val/test
-    train_dataset, test_dataset, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=seed, stratify=y, shuffle=True)
+    if stratify == True:
+        train_dataset, test_dataset, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=seed, shuffle=shuffle, stratify=y)
+    else:
+        train_dataset, test_dataset, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=seed, shuffle=shuffle)
+
     val_size = int(len(y)*0.1)
     val_dataset = train_dataset.iloc[-val_size:]
     y_val = y_train[-val_size:]
