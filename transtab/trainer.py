@@ -106,7 +106,7 @@ class Trainer:
         args = self.args 
         print(self.args['objective'])
         print(self.args['num_epoch'], self.args['lr'], self.args['eval_metric'], self.args['eval_metric_name'], )
-        
+           
         self.create_optimizer()
         if args['warmup_ratio'] is not None or args['warmup_steps'] is not None:
             num_train_steps = args['num_training_steps']
