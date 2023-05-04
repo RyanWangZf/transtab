@@ -11,6 +11,88 @@ from .trainer import Trainer
 from .trainer_utils import TransTabCollatorForCL
 from .trainer_utils import random_seed
 
+def build_regressor(
+    categorical_columns=None,
+    numerical_columns=None,
+    binary_columns=None,
+    feature_extractor=None,
+    hidden_dim=128,
+    num_layer=2,
+    num_attention_head=8,
+    hidden_dropout_prob=0,
+    ffn_dim=256,
+    activation='relu',
+    device='cuda:0',
+    checkpoint=None,
+    **kwargs) -> TransTabRegressor:
+    '''Build a :class:`transtab.modeling_transtab.TransTabClassifier`.
+
+    Parameters
+    ----------
+    categorical_columns: list 
+        a list of categorical feature names.
+
+    numerical_columns: list
+        a list of numerical feature names.
+
+    binary_columns: list
+        a list of binary feature names, accept binary indicators like (yes,no); (true,false); (0,1).
+    
+    feature_extractor: TransTabFeatureExtractor
+        a feature extractor to tokenize the input tables. if not passed the model will build itself.
+
+    num_class: int
+        number of output classes to be predicted.
+
+    hidden_dim: int
+        the dimension of hidden embeddings.
+    
+    num_layer: int
+        the number of transformer layers used in the encoder.
+    
+    num_attention_head: int
+        the numebr of heads of multihead self-attention layer in the transformers.
+
+    hidden_dropout_prob: float
+        the dropout ratio in the transformer encoder.
+
+    ffn_dim: int
+        the dimension of feed-forward layer in the transformer layer.
+    
+    activation: str
+        the name of used activation functions, support ``"relu"``, ``"gelu"``, ``"selu"``, ``"leakyrelu"``.
+    
+    device: str
+        the device, ``"cpu"`` or ``"cuda:0"``.
+    
+    checkpoint: str
+        the directory to load the pretrained TransTab model.
+
+    Returns
+    -------
+    A TransTabRegressor model.
+
+    '''
+    model = TransTabRegressor(
+        categorical_columns = categorical_columns,
+        numerical_columns = numerical_columns,
+        binary_columns = binary_columns,
+        feature_extractor = feature_extractor,
+        hidden_dim=hidden_dim,
+        num_layer=num_layer,
+        num_attention_head=num_attention_head,
+        hidden_dropout_prob=hidden_dropout_prob,
+        ffn_dim=ffn_dim,
+        activation=activation,
+        device=device,
+        **kwargs,
+        )
+    
+    if checkpoint is not None:
+        model.load(checkpoint)
+
+    return model
+
 def build_classifier(
     categorical_columns=None,
     numerical_columns=None,
