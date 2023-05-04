@@ -38,6 +38,7 @@ class Trainer:
         balance_sample=False,
         load_best_at_last=True,
         ignore_duplicate_cols=False,
+        objective='classification', ##todo
         eval_metric='auc',
         eval_less_is_better=False,
         num_workers=0,
@@ -86,6 +87,7 @@ class Trainer:
             'warmup_ratio': warmup_ratio,
             'warmup_steps': warmup_steps,
             'num_training_steps': self.get_num_train_steps(train_set_list, num_epoch, batch_size),
+            'objective':objective, ##todo
             'eval_metric': get_eval_metric_fn(eval_metric),
             'eval_metric_name': eval_metric,
             }
@@ -105,31 +107,59 @@ class Trainer:
             logger.info(f'set warmup training in initial {num_train_steps} steps')
             self.create_scheduler(num_train_steps, self.optimizer)
 
-        start_time = time.time()
-        for epoch in trange(args['num_epoch'], desc='Epoch'):
-            ite = 0
-            train_loss_all = 0
-            for dataindex in range(len(self.trainloader_list)):
-                for data in self.trainloader_list[dataindex]:
-                    self.optimizer.zero_grad()
-                    logits, loss = self.model(data[0], data[1])
-                    loss.backward()
-                    self.optimizer.step()
-                    train_loss_all += loss.item()
-                    ite += 1
-                    if self.lr_scheduler is not None:
-                        self.lr_scheduler.step()
+        if args['objectvive']=='classification':
+            start_time = time.time()
+            for epoch in trange(args['num_epoch'], desc='Epoch'):
+                ite = 0
+                train_loss_all = 0
+                for dataindex in range(len(self.trainloader_list)):
+                    for data in self.trainloader_list[dataindex]:
+                        self.optimizer.zero_grad()
+                        logits, loss = self.model(data[0], data[1]) ##todo
+                        loss.backward()
+                        self.optimizer.step()
+                        train_loss_all += loss.item()
+                        ite += 1
+                        if self.lr_scheduler is not None:
+                            self.lr_scheduler.step()
 
-            if self.test_set_list is not None:
-                eval_res_list = self.evaluate()
-                eval_res = np.mean(eval_res_list)
-                print('epoch: {}, test {}: {:.6f}'.format(epoch, self.args['eval_metric_name'], eval_res))
-                self.early_stopping(-eval_res, self.model)
-                if self.early_stopping.early_stop:
-                    print('early stopped')
-                    break
-            print('epoch: {}, train loss: {:.4f}, lr: {:.6f}, spent: {:.1f} secs'.format(epoch, train_loss_all, self.optimizer.param_groups[0]['lr'], time.time()-start_time))
+                if self.test_set_list is not None:
+                    eval_res_list = self.evaluate()
+                    eval_res = np.mean(eval_res_list)
+                    print('epoch: {}, test {}: {:.6f}'.format(epoch, self.args['eval_metric_name'], eval_res))
+                    self.early_stopping(-eval_res, self.model)
+                    if self.early_stopping.early_stop:
+                        print('early stopped')
+                        break
+                print('epoch: {}, train loss: {:.4f}, lr: {:.6f}, spent: {:.1f} secs'.format(epoch, train_loss_all, self.optimizer.param_groups[0]['lr'], time.time()-start_time))
+        
+        else:
+            start_time = time.time()
+            for epoch in trange(args['num_epoch'], desc='Epoch'):
+                ite = 0
+                train_loss_all = 0
+                for dataindex in range(len(self.trainloader_list)):
+                    for data in self.trainloader_list[dataindex]:
+                        self.optimizer.zero_grad()
+                        prediction, loss = self.model(data[0], data[1]) ##todo done
+                        loss.backward()
+                        self.optimizer.step()
+                        train_loss_all += loss.item()
+                        ite += 1
+                        if self.lr_scheduler is not None:
+                            self.lr_scheduler.step()
 
+                if self.test_set_list is not None:
+                    eval_res_list = self.evaluate()
+                    eval_res = np.mean(eval_res_list)
+                    print('epoch: {}, test {}: {:.6f}'.format(epoch, self.args['eval_metric_name'], eval_res))
+                    self.early_stopping(-eval_res, self.model)
+                    if self.early_stopping.early_stop:
+                        print('early stopped')
+                        break
+                print('epoch: {}, train loss: {:.4f}, lr: {:.6f}, spent: {:.1f} secs'.format(epoch, train_loss_all, self.optimizer.param_groups[0]['lr'], time.time()-start_time))
+        
+        
         if os.path.exists(self.output_dir):
             if self.test_set_list is not None:
                 # load checkpoints
@@ -141,39 +171,72 @@ class Trainer:
         logger.info('training complete, cost {:.1f} secs.'.format(time.time()-start_time))
 
     def evaluate(self):
+        args = self.args
         # evaluate in each epoch
         self.model.eval()
         eval_res_list = []
-        for dataindex in range(len(self.testloader_list)):
-            y_test, pred_list, loss_list = [], [], []
-            for data in self.testloader_list[dataindex]:
-                if data[1] is not None:
-                    label = data[1]
-                    if isinstance(label, pd.Series):
-                        label = label.values
-                    y_test.append(label)
-                with torch.no_grad():
-                    logits, loss = self.model(data[0], data[1])
-                if loss is not None:
-                    loss_list.append(loss.item())
-                if logits is not None:
-                    if logits.shape[-1] == 1: # binary classification
-                        pred_list.append(logits.sigmoid().detach().cpu().numpy())
-                    else: # multi-class classification
-                        pred_list.append(torch.softmax(logits,-1).detach().cpu().numpy())
+        
+        if args['objective']=='classification':
+            for dataindex in range(len(self.testloader_list)):
+                y_test, pred_list, loss_list = [], [], []
+                for data in self.testloader_list[dataindex]:
+                    if data[1] is not None:
+                        label = data[1]
+                        if isinstance(label, pd.Series):
+                            label = label.values
+                        y_test.append(label)
+                    with torch.no_grad():
+                        logits, loss = self.model(data[0], data[1])
+                    if loss is not None:
+                        loss_list.append(loss.item())
+                    if logits is not None: ##todo
+                        if logits.shape[-1] == 1: # binary classification
+                            pred_list.append(logits.sigmoid().detach().cpu().numpy())
+                        else: # multi-class classification
+                            pred_list.append(torch.softmax(logits,-1).detach().cpu().numpy())
 
-            if len(pred_list)>0:
-                pred_all = np.concatenate(pred_list, 0)
-                if logits.shape[-1] == 1:
+                if len(pred_list)>0:
+                    pred_all = np.concatenate(pred_list, 0)
+                    if logits.shape[-1] == 1:
+                        pred_all = pred_all.flatten()
+
+                if self.args['eval_metric_name'] == 'val_loss':
+                    eval_res = np.mean(loss_list)
+                else:
+                    y_test = np.concatenate(y_test, 0)
+                    eval_res = self.args['eval_metric'](y_test, pred_all)
+
+                eval_res_list.append(eval_res)
+
+        else:
+            for dataindex in range(len(self.testloader_list)):
+                y_test, pred_list, loss_list = [], [], []
+                for data in self.testloader_list[dataindex]:
+                    if data[1] is not None:
+                        label = data[1]
+                        if isinstance(label, pd.Series):
+                            label = label.values
+                        y_test.append(label)
+                    with torch.no_grad():
+                        prediction, loss = self.model(data[0], data[1])
+                    if loss is not None:
+                        loss_list.append(loss.item())
+                    if prediction is not None:
+                        pred_list.append(prediction.detach().cpu().numpy())
+
+                if len(pred_list)>0:
+                    pred_all = np.concatenate(pred_list, 0)
                     pred_all = pred_all.flatten()
+                else:
+                    pred_all = np.array([])
 
-            if self.args['eval_metric_name'] == 'val_loss':
-                eval_res = np.mean(loss_list)
-            else:
-                y_test = np.concatenate(y_test, 0)
-                eval_res = self.args['eval_metric'](y_test, pred_all)
+                if self.args['eval_metric_name'] == 'val_loss':
+                    eval_res = np.mean(loss_list)
+                else:
+                    y_test = np.concatenate(y_test, 0)
+                    eval_res = self.args['eval_metric'](y_test, pred_all)
 
-            eval_res_list.append(eval_res)
+                eval_res_list.append(eval_res)
 
         return eval_res_list
 
@@ -207,7 +270,7 @@ class Trainer:
                         bs_y_train = y_train.loc[bs_x_train.index]
 
                     self.optimizer.zero_grad()
-                    logits, loss = self.model(bs_x_train, bs_y_train)
+                    logits, loss = self.model(bs_x_train, bs_y_train) ##todo
                     loss.backward()
 
                     self.optimizer.step()
