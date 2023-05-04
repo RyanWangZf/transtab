@@ -87,7 +87,7 @@ class Trainer:
             'warmup_ratio': warmup_ratio,
             'warmup_steps': warmup_steps,
             'num_training_steps': self.get_num_train_steps(train_set_list, num_epoch, batch_size),
-            #'objective': objective, ##todo
+            'objective': objective, ##todo
             'eval_metric': get_eval_metric_fn(eval_metric),
             'eval_metric_name': eval_metric,
             }
@@ -98,9 +98,10 @@ class Trainer:
         self.lr_scheduler = None
         self.balance_sample = balance_sample
         self.load_best_at_last = load_best_at_last
-        self.objective = objective ##todo
-        print(objective)
-        print(self.objective)
+        
+        #self.objective = objective ##todo
+        #print(objective)
+        print(self.args['objective'])
 
     def train(self):
         args = self.args
@@ -109,9 +110,7 @@ class Trainer:
             num_train_steps = args['num_training_steps']
             logger.info(f'set warmup training in initial {num_train_steps} steps')
             self.create_scheduler(num_train_steps, self.optimizer)
-        
-        objective = self.objective
-        print(objective)
+        print(args['objective'])
         if objective=='classification':
             start_time = time.time()
             for epoch in trange(args['num_epoch'], desc='Epoch'):
