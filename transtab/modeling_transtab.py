@@ -993,6 +993,7 @@ class TransTabRegressor(TransTabModel):
 
             # go through transformers, get the first cls embedding
             encoder_output = self.encoder(**outputs) # bs, seqlen+1, hidden_dim
+            print(encoder_output, type(encoder_output), encoder_output.size())
 
             # make prediction
             prediction = self.regressor(encoder_output[:,0,:]) # take the CLS token representation
