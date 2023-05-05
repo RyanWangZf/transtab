@@ -20,6 +20,21 @@ OPENML_DATACONFIG = {
     'credit-g': {'bin': ['own_telephone', 'foreign_worker']},
 }
 
+EXAMPLE_DATACONFIG = {
+    "example": {
+        "bin": ["bin1", "bin2"],
+        "cat": ["cat1", "cat2"],
+        "num": ["num1", "num2"],
+        "cols": ["bin1", "bin2", "cat1", "cat2", "num1", "num2"],
+        "binary_indicator": ["1", "yes", "true", "positive", "t", "y"],
+        "data_split_idx": {
+            "train":[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            "val":[10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+            "test":[20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
+        }
+    }
+}
+
 def load_data(dataname, dataset_config=None, encode_cat=False, data_cut=None, seed=123):
     '''Load datasets from the local device or from openml.datasets.
 
