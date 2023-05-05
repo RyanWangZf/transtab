@@ -38,7 +38,7 @@ class Trainer:
         balance_sample=False,
         load_best_at_last=True,
         ignore_duplicate_cols=False,
-        objective='classification',
+        #objective='classification',
         eval_metric='auc',
         eval_less_is_better=False,
         num_workers=0,
