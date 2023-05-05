@@ -83,7 +83,7 @@ def load_data(dataname, dataset_config=None, encode_cat=False, data_cut=None, se
     if dataset_config is None: dataset_config = OPENML_DATACONFIG
     if isinstance(dataname, str):
         # load a single tabular data
-        return load_single_data(dataname=dataname, dataset_config=dataset_config, encode_cat=encode_cat, data_cut=data_cut, seed=seed, shuffle=shuffle, stratify=stratify)
+        return load_single_data(dataname=dataname, dataset_config=dataset_config, encode_cat=encode_cat, data_cut=data_cut, seed=seed)
     
     if isinstance(dataname, list):
         # load a list of datasets, combine together and outputs
@@ -93,7 +93,8 @@ def load_data(dataname, dataset_config=None, encode_cat=False, data_cut=None, se
         for dataname_ in dataname:
             data_config = dataset_config.get(dataname_, None)
             allset, trainset, valset, testset, cat_cols, num_cols, bin_cols = \
-                load_single_data(dataname_, dataset_config=data_config, encode_cat=encode_cat, data_cut=data_cut, seed=seed, shuffle=shuffle, stratify=stratify)
+                load_single_data(dataname_, dataset_config=dataset_config, encode_cat=encode_cat, data_cut=data_cut, seed=seed)
+
             num_col_list.extend(num_cols)
             cat_col_list.extend(cat_cols)
             bin_col_list.extend(bin_cols)
@@ -103,7 +104,7 @@ def load_data(dataname, dataset_config=None, encode_cat=False, data_cut=None, se
             test_list.append(testset)
         return all_list, train_list, val_list, test_list, cat_col_list, num_col_list, bin_col_list
 
-def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=None, seed=123, stratify=True, shuffle=True):
+def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=None, seed=123):
     '''Load tabular dataset from local or from openml public database.
     args:
         dataname: Can either be the data directory on `./data/{dataname}` or the dataname which can be found from the openml database.

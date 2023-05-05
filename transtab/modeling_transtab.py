@@ -1255,7 +1255,7 @@ class TransTabClassifierM(TransTabModel):
         else:
             loss = None
 
-        return logits, loss, encoder_output, linear_weights ##todo
+        return logits, loss, encoder_output, linear_weights
 
 
 class TransTabClassifier(TransTabModel):

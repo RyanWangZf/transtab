@@ -95,25 +95,11 @@ def integrated_gradients(model, x_test, y_test=None, baselines=None, n_steps=50,
             bs_x_test_df = pd.DataFrame(data = scaled_features[0].detach().numpy(),
                                         columns = bs_x_test.columns)
              
-            #with torch.no_grad(): 
             prediction, loss, _, _, _ = model(bs_x_test_df, y_test) #todo
             print(prediction)
 
             grads = grad(outputs=torch.unbind(prediction), inputs=scaled_features[0], allow_unused=True)
             print(grads)
-            #############
-
-
-
-           # with torch.no_grad():
-            #    prediction, loss, _, _ = model(bs_x_test, y_test) #todo
-            #if loss is not None:
-             #   loss_list.append(loss.item())
-            #if prediction is not None:
-             #   pred_list.append(prediction.detach().cpu().numpy())
-
-        #pred_all = np.concatenate(pred_list, 0)
-        #pred_all = pred_all.flatten()
 
     if return_loss:
         avg_loss = np.mean(loss_list)
@@ -231,9 +217,9 @@ def predict(clf,
     pred_list, loss_list = [], []
     for i in range(0, len(x_test), eval_batch_size):
         bs_x_test = x_test.iloc[i:i+eval_batch_size]
-        bs_y_test = y_test.iloc[i:i+eval_batch_size] if y_test is not None else None
+        bs_y_test = y_test.iloc[i:i+eval_batch_size]
         with torch.no_grad():
-            logits, loss = clf(bs_x_test, bs_y_test)
+            logits, loss, _, _ = clf(bs_x_test, bs_y_test) #todo
         
         if loss is not None:
             loss_list.append(loss.item())
