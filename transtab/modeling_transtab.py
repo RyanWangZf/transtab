@@ -921,9 +921,9 @@ class TransTabRegressor(TransTabModel):
         binary_columns=None,
         feature_extractor=None,
         hidden_dim=128,
-        num_layer=8, #todo 2
+        num_layer=2, 
         num_attention_head=8,
-        hidden_dropout_prob=0.1, ##todo 0
+        hidden_dropout_prob=0,
         ffn_dim=256,
         activation='relu',
         device='cuda:0',
