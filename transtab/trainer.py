@@ -109,16 +109,13 @@ class Trainer:
 
     def train(self):
         args = self.args 
-        print(self.args['objective'])
-        print(self.args['num_epoch'], self.args['lr'], self.args['eval_metric'], self.args['eval_metric_name'], )
-           
         self.create_optimizer()
         if args['warmup_ratio'] is not None or args['warmup_steps'] is not None:
             num_train_steps = args['num_training_steps']
             logger.info(f'set warmup training in initial {num_train_steps} steps')
             self.create_scheduler(num_train_steps, self.optimizer)
         
-        if (self.args['objective']=='classification'):
+        if (args['objective']=='classification'):
             start_time = time.time()
             for epoch in trange(args['num_epoch'], desc='Epoch'):
                 ite = 0
@@ -152,6 +149,7 @@ class Trainer:
                 for dataindex in range(len(self.trainloader_list)):
                     for data in self.trainloader_list[dataindex]:
                         self.optimizer.zero_grad()
+                        print(data[0], data[1])
                         prediction, loss = self.model(data[0], data[1]) ##todo done
                         loss.backward()
                         self.optimizer.step()
@@ -187,7 +185,7 @@ class Trainer:
         self.model.eval()
         eval_res_list = []
         
-        if args['objective']=='classification':
+        if (args['objective']=='classification'):        
             for dataindex in range(len(self.testloader_list)):
                 y_test, pred_list, loss_list = [], [], []
                 for data in self.testloader_list[dataindex]:
