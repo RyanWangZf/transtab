@@ -102,7 +102,7 @@ class Trainer:
         if self.args['eval_metric_name']!='mse':
             self.args['objective']='classification'
         else:
-             self.args['objective']='regression'
+            self.args['objective']='regression'
 
 
     def train(self):
@@ -113,6 +113,7 @@ class Trainer:
             logger.info(f'set warmup training in initial {num_train_steps} steps')
             self.create_scheduler(num_train_steps, self.optimizer)
         
+        print('Train '+args['objective'])
         if (args['objective']=='classification'):
             start_time = time.time()
             for epoch in trange(args['num_epoch'], desc='Epoch'):
@@ -182,6 +183,7 @@ class Trainer:
         self.model.eval()
         eval_res_list = []
         
+        print('Evaluate '+args['objective'])
         if (args['objective']=='classification'):        
             for dataindex in range(len(self.testloader_list)):
                 y_test, pred_list, loss_list = [], [], []
