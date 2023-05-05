@@ -579,6 +579,7 @@ class TransTabLinearRegressor(nn.Module):
         self.norm = nn.LayerNorm(hidden_dim)
 
     def forward(self, x) -> Tensor:
+        print(x[:,0,:], type(x[:,0,:]), len(x[:,0,:]))
         x = x[:,0,:] # take the cls token embedding
         x = self.norm(x)
         prediction = self.fc(x)
