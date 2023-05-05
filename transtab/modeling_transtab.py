@@ -427,7 +427,7 @@ class TransTabTransformerLayer(nn.Module):
             state['activation'] = F.relu
         super().__setstate__(state)
 
-    def forward(self, src, src_mask= None, src_key_padding_mask= None) -> Tensor:
+    def forward(self, src, src_mask= None, src_key_padding_mask= None, is_causal=None, **kwargs) -> Tensor:
         r"""Pass the input through the encoder layer.
 
         Args:

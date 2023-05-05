@@ -76,8 +76,9 @@ def load_data(dataname, dataset_config=None, encode_cat=False, data_cut=None, se
         all_list = []
         train_list, val_list, test_list = [], [], []
         for dataname_ in dataname:
+            data_config = dataset_config.get(dataname_, None)
             allset, trainset, valset, testset, cat_cols, num_cols, bin_cols = \
-                load_single_data(dataname_, dataset_config=dataset_config, encode_cat=encode_cat, data_cut=data_cut, seed=seed)
+                load_single_data(dataname_, dataset_config=data_config, encode_cat=encode_cat, data_cut=data_cut, seed=seed)
             num_col_list.extend(num_cols)
             cat_col_list.extend(cat_cols)
             bin_col_list.extend(bin_cols)
@@ -101,7 +102,6 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
         trainset, valset, testset: the train/val/test split
         num_cols, cat_cols, bin_cols: the list of numerical/categorical/binary column names
     '''
-    if dataset_config is None: dataset_config = OPENML_DATACONFIG
     print('####'*10)
     if os.path.exists(dataname):
         print(f'load from local data dir {dataname}')
@@ -126,20 +126,19 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
         cat_cols = [col for col in all_cols if col not in num_cols and col not in bin_cols]
 
         # update cols by loading dataset_config
-        if dataname in dataset_config:
-            data_config = dataset_config[dataname]
-            if 'columns' in data_config:
-                new_cols = dataset_config[dataname]['columns']
+        if dataset_config is not None:
+            if 'columns' in dataset_config:
+                new_cols = dataset_config['columns']
                 X.columns = new_cols
 
-            if 'bin' in data_config:
-                bin_cols = data_config['bin']
+            if 'bin' in dataset_config:
+                bin_cols = dataset_config['bin']
             
-            if 'cat' in data_config:
-                cat_cols = data_config['cat']
+            if 'cat' in dataset_config:
+                cat_cols = dataset_config['cat']
 
-            if 'num' in data_config:
-                num_cols = data_config['num']
+            if 'num' in dataset_config:
+                num_cols = dataset_config['num']
         
     else:
         dataset = openml.datasets.get_dataset(dataname)
@@ -163,8 +162,8 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
         num_cols = [col for col in all_cols[~categorical_indicator] if col not in drop_cols]
         all_cols = [col for col in all_cols if col not in drop_cols]
         
-        if dataname in dataset_config:
-            if 'bin' in dataset_config[dataname]: bin_cols = [c for c in cat_cols if c in dataset_config[dataname]['bin']]
+        if dataset_config is not None:
+            if 'bin' in dataset_config: bin_cols = [c for c in cat_cols if c in dataset_config['bin']]
         else: bin_cols = []
         cat_cols = [c for c in cat_cols if c not in bin_cols]
 
@@ -188,18 +187,22 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
 
     if len(bin_cols) > 0:
         for col in bin_cols: X[col].fillna(X[col].mode()[0], inplace=True)
-        if dataname in dataset_config:
-            if 'binary_indicator' in dataset_config[dataname]:
-                X[bin_cols] = X[bin_cols].astype(str).applymap(lambda x: 1 if x.lower() in dataset_config[dataname]['binary_indicator'] else 0).values
-            else:
-                X[bin_cols] = X[bin_cols].astype(str).applymap(lambda x: 1 if x.lower() in ['yes','true','1','t'] else 0).values        
+        if 'binary_indicator' in dataset_config:
+            X[bin_cols] = X[bin_cols].astype(str).applymap(lambda x: 1 if x.lower() in dataset_config['binary_indicator'] else 0).values
+        else:
+            X[bin_cols] = X[bin_cols].astype(str).applymap(lambda x: 1 if x.lower() in ['yes','true','1','t'] else 0).values        
+        
         # if no dataset_config given, keep its original format
+        # raise warning if there is not only 0/1 in the binary columns
+        if (~X[bin_cols].isin([0,1])).any().any():
+            raise ValueError(f'binary columns {bin_cols} contains values other than 0/1.')
+
     
     X = X[bin_cols + num_cols + cat_cols]
 
     # rename column names if is given
-    if dataname in dataset_config:
-        data_config = dataset_config[dataname]
+    if dataset_config is not None:
+        data_config = dataset_config
         if 'columns' in data_config:
             new_cols = data_config['columns']
             X.columns = new_cols
@@ -214,13 +217,39 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
         if 'num' in data_config:
             num_cols = data_config['num']
 
+
     # split train/val/test
-    train_dataset, test_dataset, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=seed, stratify=y, shuffle=True)
-    val_size = int(len(y)*0.1)
-    val_dataset = train_dataset.iloc[-val_size:]
-    y_val = y_train[-val_size:]
-    train_dataset = train_dataset.iloc[:-val_size]
-    y_train = y_train[:-val_size]
+    data_split_idx = None
+    if dataset_config is not None:
+        data_split_idx = dataset_config.get('data_split_idx', None)
+
+    if data_split_idx is not None:
+        train_idx = data_split_idx.get('train', None)
+        val_idx = data_split_idx.get('val', None)
+        test_idx = data_split_idx.get('test', None)
+
+        if train_idx is None or test_idx is None:
+            raise ValueError('train/test split indices must be provided together')
+    
+        else:
+            train_dataset = X.iloc[train_idx]
+            y_train = y[train_idx]
+            test_dataset = X.iloc[test_idx]
+            y_test = y[test_idx]
+            if val_idx is not None:
+                val_dataset = X.iloc[val_idx]
+                y_val = y[val_idx]
+            else:
+                val_dataset = None
+                y_val = None
+    else:
+        # split train/val/test
+        train_dataset, test_dataset, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=seed, stratify=y, shuffle=True)
+        val_size = int(len(y)*0.1)
+        val_dataset = train_dataset.iloc[-val_size:]
+        y_val = y_train[-val_size:]
+        train_dataset = train_dataset.iloc[:-val_size]
+        y_train = y_train[:-val_size]
 
     if data_cut is not None:
         np.random.shuffle(all_cols)
