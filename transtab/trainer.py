@@ -123,9 +123,9 @@ class Trainer:
                 for dataindex in range(len(self.trainloader_list)):
                     for data in self.trainloader_list[dataindex]:
                         self.optimizer.zero_grad()
-                        print(data[0], data[1])
-                        print(type(data[0]), type(data[1]))
-                        print(len(data[0]),  len(data[1]))
+                        #print(data[0], data[1])
+                        #print(type(data[0]), type(data[1]))
+                        #print(len(data[0]),  len(data[1]))
                         logits, loss = self.model(data[0], data[1]) ##todo
                         loss.backward()
                         self.optimizer.step()
@@ -152,9 +152,9 @@ class Trainer:
                 for dataindex in range(len(self.trainloader_list)):
                     for data in self.trainloader_list[dataindex]:
                         self.optimizer.zero_grad()
-                        print(data[0], data[1])
-                        print(type(data[0]), type(data[1]))
-                        print(len(data[0]),  len(data[1]))
+                        #print(data[0], data[1])
+                        #print(type(data[0]), type(data[1]))
+                        #print(len(data[0]),  len(data[1]))
                         prediction, loss = self.model(data[0], data[1]) ##todo done
                         loss.backward()
                         self.optimizer.step()
