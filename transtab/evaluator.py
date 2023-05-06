@@ -55,6 +55,7 @@ def predict(clf,
             
         if logits.shape[-1] == 1: # binary classification
             pred_list.append(logits.sigmoid().detach().cpu().numpy())
+            print('binary') #todo
         else: # multi-class classification
             pred_list.append(torch.softmax(logits,-1).detach().cpu().numpy())
             
