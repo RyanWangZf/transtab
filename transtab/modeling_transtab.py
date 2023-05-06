@@ -579,7 +579,8 @@ class TransTabLinearRegressor(nn.Module):
         self.norm = nn.LayerNorm(hidden_dim)
 
     def forward(self, x) -> Tensor:  
-        x = self.norm(x) # take the cls token embedding
+        x = x[:,0,:] # take the cls token embedding
+        x = self.norm(x) 
         prediction = self.fc(x)
         return prediction
 
@@ -993,7 +994,7 @@ class TransTabRegressor(TransTabModel):
             #print(encoder_output, type(encoder_output), encoder_output.size()) #todo
 
             # make prediction
-            prediction = self.regressor(encoder_output[:,0,:]) # take the CLS token representation 
+            prediction = self.regressor(encoder_output) # take the CLS token representation 
 
             if y is not None:
                 # compute regression loss
