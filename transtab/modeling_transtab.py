@@ -1127,7 +1127,7 @@ class TransTabClassifier(TransTabModel):
         else:
             loss = None
 
-        return logits, loss
+        return logits, loss, encoder_output ##todo
 
 class TransTabForCL(TransTabModel):
     '''The contrasstive learning model subclass from :class:`transtab.modeling_transtab.TransTabModel`.
