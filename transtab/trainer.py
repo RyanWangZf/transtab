@@ -194,7 +194,7 @@ class Trainer:
                             label = label.values
                         y_test.append(label)
                     with torch.no_grad():
-                        logits, loss = self.model(data[0], data[1])
+                        logits, loss, _ = self.model(data[0], data[1])
                     if loss is not None:
                         loss_list.append(loss.item())
                     if logits is not None: ##todo
