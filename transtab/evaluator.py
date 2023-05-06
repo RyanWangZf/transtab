@@ -47,7 +47,7 @@ def predict(clf,
     for i in range(0, len(x_test), eval_batch_size):
         bs_x_test = x_test.iloc[i:i+eval_batch_size]
         with torch.no_grad():
-            logits, loss = clf(bs_x_test, y_test)
+            logits, loss, _ = clf(bs_x_test, y_test) #todo
         
         if loss is not None:
             loss_list.append(loss.item())
