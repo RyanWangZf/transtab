@@ -200,6 +200,7 @@ class Trainer:
                     if logits is not None: ##todo
                         if logits.shape[-1] == 1: # binary classification
                             pred_list.append(logits.sigmoid().detach().cpu().numpy())
+                            print('binary') #todo
                         else: # multi-class classification
                             pred_list.append(torch.softmax(logits,-1).detach().cpu().numpy())
 
@@ -212,7 +213,7 @@ class Trainer:
                     eval_res = np.mean(loss_list)
                 else:
                     y_test = np.concatenate(y_test, 0)
-                    eval_res = self.args['eval_metric'](y_test, pred_all)
+                    eval_res = self.args['eval_metric'](y_test, pred_all) ##add binary here
 
                 eval_res_list.append(eval_res)
 
