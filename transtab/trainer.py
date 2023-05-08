@@ -201,6 +201,7 @@ class Trainer:
                         if logits.shape[-1] == 1: # binary classification
                             print(pred_list)
                             pred_list.append(logits.sigmoid().detach().cpu().numpy())
+                            print(pred_list)
                             print('binary') #todo
                         else: # multi-class classification
                             pred_list.append(torch.softmax(logits,-1).detach().cpu().numpy())
