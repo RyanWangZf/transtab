@@ -1083,7 +1083,7 @@ class TransTabClassifierM(TransTabModel):
         )
         self.num_class = num_class
         self.clf = TransTabLinearClassifier(num_class=num_class, hidden_dim=hidden_dim)
-        if self.num_class >= 2: #todo
+        if self.num_class >= 2: #todo >2
             self.loss_fn = nn.CrossEntropyLoss(reduction='none')
         else:
             self.loss_fn = nn.BCEWithLogitsLoss(reduction='none')
