@@ -198,13 +198,9 @@ class Trainer:
                     if loss is not None:
                         loss_list.append(loss.item())
                     if logits is not None: ##todo
-                        print(logits)
                         pred_list.append(torch.softmax(logits,-1).detach().cpu().numpy())
                         #if logits.shape[-1] == 1: # binary classification
-                            #print(logits)
                          #   pred_list.append(logits.sigmoid().detach().cpu().numpy())
-                            #print(pred_list)
-                            #print('binary') #todo
                         #else: # multi-class classification
                          #   pred_list.append(torch.softmax(logits,-1).detach().cpu().numpy())
 
@@ -217,7 +213,6 @@ class Trainer:
                     eval_res = np.mean(loss_list)
                 else:
                     y_test = np.concatenate(y_test, 0)
-                    print(pred_all)
                     eval_res = self.args['eval_metric'](y_test, pred_all) ##add binary here
 
                 eval_res_list.append(eval_res)

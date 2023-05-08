@@ -104,10 +104,7 @@ def get_eval_metric_fn(eval_metric):
     return fn_dict[eval_metric]
 
 def acc_fn(y, p):
-    #print(y)
-    #print(p)
     y_p = np.argmax(p, -1)
-    #print(y_p)
     return accuracy_score(y, y_p)
 
 def auc_fn(y, p):
