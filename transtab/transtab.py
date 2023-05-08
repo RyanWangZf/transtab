@@ -2,7 +2,7 @@ import pdb
 import os
 
 from . import constants
-from .modeling_transtab import TransTabRegressor, TransTabClassifier, TransTabFeatureExtractor, TransTabFeatureProcessor
+from .modeling_transtab import TransTabRegressor, TransTabClassifier, TransTabClassifierM, TransTabFeatureExtractor, TransTabFeatureProcessor
 from .modeling_transtab import TransTabForCL
 from .modeling_transtab import TransTabInputEncoder, TransTabModel
 from .dataset import load_data
