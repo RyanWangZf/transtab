@@ -198,6 +198,7 @@ class Trainer:
                     if loss is not None:
                         loss_list.append(loss.item())
                     if logits is not None: ##todo
+                        print(logits)
                         if logits.shape[-1] == 1: # binary classification
                             #print(logits)
                             pred_list.append(logits.sigmoid().detach().cpu().numpy())
