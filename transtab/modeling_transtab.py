@@ -590,7 +590,7 @@ class TransTabLinearClassifier(nn.Module):
         hidden_dim=128) -> None:
         super().__init__()
         if num_class <= 2:
-            self.fc = nn.Linear(hidden_dim, 1)
+            self.fc = nn.Linear(hidden_dim, 2) #todo
         else:
             self.fc = nn.Linear(hidden_dim, num_class)
         self.norm = nn.LayerNorm(hidden_dim)
