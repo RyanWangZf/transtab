@@ -107,8 +107,8 @@ def build_classifierM(
     activation='relu',
     device='cuda:0',
     checkpoint=None,
-    **kwargs) -> TransTabClassifier:
-    '''Build a :class:`transtab.modeling_transtab.TransTabClassifier`.
+    **kwargs) -> TransTabClassifierM:
+    '''Build a :class:`transtab.modeling_transtab.TransTabClassifierM`.
 
     Parameters
     ----------
@@ -153,7 +153,7 @@ def build_classifierM(
 
     Returns
     -------
-    A TransTabClassifier model.
+    A TransTabClassifierM model.
 
     '''
     model = TransTabClassifierM(
