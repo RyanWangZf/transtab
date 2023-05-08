@@ -156,7 +156,7 @@ def build_classifierM(
     A TransTabClassifier model.
 
     '''
-    model = TransTabClassifier(
+    model = TransTabClassifierM(
         categorical_columns = categorical_columns,
         numerical_columns = numerical_columns,
         binary_columns = binary_columns,
