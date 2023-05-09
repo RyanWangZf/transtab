@@ -115,6 +115,8 @@ def auc_fn(y, p):
     return roc_auc_score(y, p)
 
 def mse_fn(y, p):
+    print(y)
+    
     return mean_squared_error(y, p, squared=False)
 
 class EarlyStopping:
