@@ -116,7 +116,7 @@ def auc_fn(y, p):
 
 def mse_fn(y, p):
     print(y)
-    
+    print(p)  
     return mean_squared_error(y, p, squared=False)
 
 class EarlyStopping:
