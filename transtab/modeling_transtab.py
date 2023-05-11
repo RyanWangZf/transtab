@@ -408,8 +408,8 @@ class TransTabTransformerLayer(nn.Module):
         src = x
         key_padding_mask = ~key_padding_mask.bool()
         #x = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)[0]
-        x, attention_weights  = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)#[0]
-        print( len(attention_weights),attention_weights.size() )
+        x, attention_weights  = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)
+        #print( len(attention_weights),attention_weights.size() )
         return self.dropout1(x)
 
     # feed forward block
@@ -594,10 +594,9 @@ class TransTabLinearClassifier(nn.Module):
         self.norm = nn.LayerNorm(hidden_dim)
 
     def forward(self, x) -> Tensor:
-        #x = x[:,0,:] # take the cls token embedding
+        x = x[:,0,:] # take the cls token embedding
         x = self.norm(x)
         logits = self.fc(x)
-        print(logits, logits.size())
         return logits
     
 class TransTabLinearRegressor(nn.Module):
