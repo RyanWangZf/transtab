@@ -408,10 +408,9 @@ class TransTabTransformerLayer(nn.Module):
                   attn_mask: Optional[Tensor], key_padding_mask: Optional[Tensor]) -> Tensor:
         src = x
         key_padding_mask = ~key_padding_mask.bool()
-        x = self.self_attn(x, x, x,
-                           attn_mask=attn_mask,
-                           key_padding_mask=key_padding_mask,
-                           )[0]
+        #x = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)[0]
+        x, attention_weights  = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)#[0]
+        print(attention_weights, len(attention_weights))
         return self.dropout1(x)
 
     # feed forward block
@@ -998,7 +997,6 @@ class TransTabRegressor(TransTabModel):
 
             # Obtain the linear weights
             linear_weights = self.regressor.fc.weight.detach().cpu().numpy()
-
 
             if y is not None:
                 # compute regression loss
