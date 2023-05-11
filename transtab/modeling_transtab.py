@@ -983,6 +983,10 @@ class TransTabRegressor(TransTabModel):
             # make prediction
             prediction = self.regressor(encoder_output) # take the CLS token representation 
 
+            # Obtain the linear weights
+            linear_weights = self.regressor.fc.weight.detach().cpu().numpy()
+
+
             if y is not None:
                 # compute regression loss
                 y_ts = torch.tensor(y.values).to(self.device).float()
@@ -991,7 +995,7 @@ class TransTabRegressor(TransTabModel):
             else:
                 loss = None
 
-            return prediction, loss
+            return prediction, loss, encoder_output, linear_weights ##todo
 
 class TransTabClassifierM(TransTabModel):
     '''The classifier model subclass from :class:`transtab.modeling_transtab.TransTabModel`.
