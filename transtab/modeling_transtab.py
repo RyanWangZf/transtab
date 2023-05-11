@@ -404,8 +404,7 @@ class TransTabTransformerLayer(nn.Module):
             self.activation = activation
 
     # self-attention block
-    def _sa_block(self, x: Tensor,
-                  attn_mask: Optional[Tensor], key_padding_mask: Optional[Tensor]) -> Tensor:
+    def _sa_block(self, x: Tensor, attn_mask: Optional[Tensor], key_padding_mask: Optional[Tensor]) -> Tensor:
         src = x
         key_padding_mask = ~key_padding_mask.bool()
         #x = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)[0]
@@ -595,9 +594,10 @@ class TransTabLinearClassifier(nn.Module):
         self.norm = nn.LayerNorm(hidden_dim)
 
     def forward(self, x) -> Tensor:
-        x = x[:,0,:] # take the cls token embedding
+        #x = x[:,0,:] # take the cls token embedding
         x = self.norm(x)
         logits = self.fc(x)
+        print(logits, logits.size())
         return logits
     
 class TransTabLinearRegressor(nn.Module):
