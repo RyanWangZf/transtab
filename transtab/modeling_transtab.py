@@ -977,6 +977,7 @@ class TransTabRegressor(TransTabModel):
                 outputs = self.cls_token(**outputs) ##todo we pass to these
             
             elif isinstance(x, torch.Tensor): #todo
+                inputs = {}
                 inputs['embedding'] = x
                 outputs = self.cls_token(**inputs) ##todo we pass to these
 
