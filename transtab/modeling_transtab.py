@@ -974,8 +974,8 @@ class TransTabRegressor(TransTabModel):
                 raise ValueError(f'TransTabRegressor takes inputs with dict or pd.DataFrame, find {type(x)}.')
 
             outputs = self.input_encoder.feature_processor(**inputs)
-            print('first output')
-            print(outputs.shape)
+            #print('first output')
+            #print(outputs.shape)
             
             outputs = self.cls_token(**outputs)
             print('second output')
