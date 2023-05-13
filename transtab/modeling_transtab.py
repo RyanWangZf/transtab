@@ -978,20 +978,27 @@ class TransTabRegressor(TransTabModel):
             if isinstance(x, dict):
                 # input is the pre-tokenized encoded inputs
                 inputs = x
+                
+                outputs = self.input_encoder.feature_processor(**inputs) ##todo these are the targets
+                outputs = self.cls_token(**outputs) ##todo we pass to these
+            
             elif isinstance(x, pd.DataFrame):
                 # input is dataframe
                 inputs = self.input_encoder.feature_extractor(x)
+                
+                outputs = self.input_encoder.feature_processor(**inputs) ##todo these are the targets
+                outputs = self.cls_token(**outputs) ##todo we pass to these
+            
             elif isinstance(x, torch.Tensor): #todo
-                inputs = self.input_encoder.feature_extractor(x)
+                inputs['embedding'] = x
+                outputs = self.cls_token(**inputs) ##todo we pass to these
+
             else:
                 raise ValueError(f'TransTabRegressor takes inputs with dict or pd.DataFrame, find {type(x)}.')
 
-            outputs = self.input_encoder.feature_processor(**inputs)
-            print(outputs['embedding'].size())
-            outputs = self.cls_token(**outputs)
-            #print('############')
-            #print(outputs)
-
+            #outputs = self.input_encoder.feature_processor(**inputs) ##todo these are the targets
+            #outputs = self.cls_token(**outputs) ##todo we pass to these
+            
             # go through transformers, get the first cls embedding
             encoder_output = self.encoder(**outputs) # bs, seqlen+1, hidden_dim
             #print(encoder_output, type(encoder_output), encoder_output.size()) #todo
