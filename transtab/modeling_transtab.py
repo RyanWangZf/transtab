@@ -974,10 +974,10 @@ class TransTabRegressor(TransTabModel):
                 raise ValueError(f'TransTabRegressor takes inputs with dict or pd.DataFrame, find {type(x)}.')
 
             outputs = self.input_encoder.feature_processor(**inputs)
-            print(outputs)
+            print(outputs['embedding'].size())
             outputs = self.cls_token(**outputs)
-            print('############')
-            print(outputs)
+            #print('############')
+            #print(outputs)
 
             # go through transformers, get the first cls embedding
             encoder_output = self.encoder(**outputs) # bs, seqlen+1, hidden_dim
@@ -985,7 +985,7 @@ class TransTabRegressor(TransTabModel):
             
             # make prediction
             prediction = self.regressor(encoder_output) # take the CLS token representation 
-            
+
             # Obtain the linear weights
             linear_weights = self.regressor.fc.weight.detach().cpu().numpy()
 
