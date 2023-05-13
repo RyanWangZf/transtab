@@ -974,8 +974,11 @@ class TransTabRegressor(TransTabModel):
                 raise ValueError(f'TransTabRegressor takes inputs with dict or pd.DataFrame, find {type(x)}.')
 
             outputs = self.input_encoder.feature_processor(**inputs)
+            print(outputs)
             outputs = self.cls_token(**outputs)
-           
+            print('############')
+            print(outputs)
+            
             # go through transformers, get the first cls embedding
             encoder_output = self.encoder(**outputs) # bs, seqlen+1, hidden_dim
             #print(encoder_output, type(encoder_output), encoder_output.size()) #todo
