@@ -968,6 +968,8 @@ class TransTabRegressor(TransTabModel):
             elif isinstance(x, pd.DataFrame):
                 # input is dataframe
                 inputs = self.input_encoder.feature_extractor(x)
+            #elif isinstance(x, torch.Tensor): #todo
+           #     inputs = self.input_encoder.feature_extractor(x)
             else:
                 raise ValueError(f'TransTabRegressor takes inputs with dict or pd.DataFrame, find {type(x)}.')
 

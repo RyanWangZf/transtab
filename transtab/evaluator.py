@@ -8,6 +8,77 @@ from sklearn.metrics import roc_auc_score, accuracy_score, mean_squared_error
 
 from . import constants
 
+def predictM(model, x_test, y_test=None, return_loss=False, eval_batch_size=256, objective='classification'):
+    '''Make predictions by TransTabClassifier.
+
+    Parameters
+    ----------
+    model: TransTab
+        the TransTab model to make predictions.
+
+    x_test: pd.DataFrame
+            input tabular data.
+
+    y_test: pd.Series
+        target labels for input x_test. will be ignored if ``return_loss=False``.
+    
+    return_loss: bool
+        set True will return the loss if y_test is given.
+    
+    eval_batch_size: int
+        the batch size for inference.
+
+    Returns
+    -------
+    pred_all: np.array
+        if ``return_loss=False``, return the predictions made by TransTabClassifier.
+
+    avg_loss: float
+        if ``return_loss=True``, return the mean loss of the predictions made by TransTabClassifier.
+
+    '''
+
+    print(objective + ' Prediction'])
+    if (objective == 'classification'):
+        model.eval()
+        pred_list, loss_list = [], []
+        for i in range(0, len(x_test), eval_batch_size):
+            bs_x_test = x_test.iloc[i:i+eval_batch_size]
+            with torch.no_grad():
+                logits, loss, _, _ = model(bs_x_test, y_test) #todo
+            if loss is not None:
+                loss_list.append(loss.item())
+            if logits is not None:
+                  pred_list.append(torch.softmax(logits,-1).detach().cpu().numpy())
+            #if logits.shape[-1] == 1: # binary classification
+            #    pred_list.append(logits.sigmoid().detach().cpu().numpy())
+            #else: # multi-class classification
+            #    pred_list.append(torch.softmax(logits,-1).detach().cpu().numpy())
+        pred_all = np.concatenate(pred_list, 0)
+        if logits.shape[-1] == 1:
+            pred_all = pred_all.flatten()
+            
+    else:
+        model.eval()
+        pred_list, loss_list = [], []
+        for i in range(0, len(x_test), eval_batch_size):
+            bs_x_test = x_test.iloc[i:i+eval_batch_size]
+            with torch.no_grad():
+                logits, loss, _, _ = model(bs_x_test, y_test) #todo
+            if loss is not None:
+                loss_list.append(loss.item())
+            if prediction is not None:
+                pred_list.append(prediction.detach().cpu().numpy())
+
+        pred_all = np.concatenate(pred_list, 0)
+        pred_all = pred_all.flatten()
+
+    if return_loss:
+        avg_loss = np.mean(loss_list)
+        return avg_loss
+    else:
+        return pred_all
+
 def predict(clf, 
     x_test,
     y_test=None,
@@ -58,7 +129,6 @@ def predict(clf,
     pred_all = np.concatenate(pred_list, 0)
     if logits.shape[-1] == 1:
         pred_all = pred_all.flatten()
-
     if return_loss:
         avg_loss = np.mean(loss_list)
         return avg_loss
