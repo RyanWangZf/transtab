@@ -38,7 +38,7 @@ def predictM(model, x_test, y_test=None, return_loss=False, eval_batch_size=256,
 
     '''
 
-    print(objective + ' Prediction'])
+    print(objective + ' Prediction')
     if (objective == 'classification'):
         model.eval()
         pred_list, loss_list = [], []
@@ -57,7 +57,7 @@ def predictM(model, x_test, y_test=None, return_loss=False, eval_batch_size=256,
         pred_all = np.concatenate(pred_list, 0)
         if logits.shape[-1] == 1:
             pred_all = pred_all.flatten()
-            
+
     else:
         model.eval()
         pred_list, loss_list = [], []
