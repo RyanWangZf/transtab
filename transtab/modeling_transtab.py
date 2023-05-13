@@ -624,9 +624,7 @@ class TransTabCLSToken(nn.Module):
         return self.weight.view(*new_dims, -1).expand(*leading_dimensions, -1)
 
     def forward(self, embedding, attention_mask=None, **kwargs) -> Tensor:
-        print(embedding.size())
         embedding = torch.cat([self.expand(len(embedding), 1), embedding], dim=1)
-        print(embedding.size())
         outputs = {'embedding': embedding}
         if attention_mask is not None:
             attention_mask = torch.cat([torch.ones(attention_mask.shape[0],1).to(attention_mask.device), attention_mask], 1)
