@@ -377,8 +377,8 @@ class TransTabTransformerLayer(nn.Module):
                  device=None, dtype=None, use_layer_norm=True) -> None:
         factory_kwargs = {'device': device, 'dtype': dtype}
         super().__init__()
-        self.self_attn = nn.MultiheadAttention(d_model, nhead, batch_first=batch_first,
-                                            **factory_kwargs)
+        self.self_attn = nn.MultiheadAttention(d_model, nhead, batch_first=batch_first, **factory_kwargs)
+        
         # Implementation of Feedforward model
         self.linear1 = nn.Linear(d_model, dim_feedforward, **factory_kwargs)
         self.dropout = nn.Dropout(dropout)
