@@ -1130,7 +1130,7 @@ class TransTabClassifierM(TransTabModel):
         logits = self.clf(encoder_output) # take the CLS token representation
 
         # Obtain the linear weights
-        linear_weights = self.regressor.fc.weight.detach().cpu().numpy()
+        linear_weights = self.clf.fc.weight.detach().cpu().numpy()
 
         if y is not None:
             # compute classification loss
