@@ -85,7 +85,7 @@ def integrated_gradients(model, x_test, y_test=None, baselines=None, n_steps=50,
                                                 )
             
             bs_x_test[:1] = scaled_features
-
+            print(type(bs_x_test[:1] ), type(scaled_features))
             #with torch.no_grad(): 
             prediction, loss, _, _ = model(bs_x_test, y_test) #todo
             
