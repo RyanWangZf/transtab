@@ -67,7 +67,7 @@ def integrated_gradients(model, x_test, y_test=None, baselines=None, n_steps=50,
             #print(bs_x_test.dim(), bs_x_test.shape, type(bs_x_test))
             print(type(bs_x_test))
             
-            input = torch.from_numpy(bs_x_test).type(torch.FloatTensor)
+            input = torch.from_numpy(bs_x_test.to_numpy()).type(torch.FloatTensor)
             print(inputs.dim())
 
             #if inputs.dim() == 2: inputs = inputs.unsqueeze(0)
