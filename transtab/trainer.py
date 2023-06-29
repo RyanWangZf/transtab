@@ -14,7 +14,7 @@ from tqdm.autonotebook import trange
 from loguru import logger
 
 from . import constants
-from .evaluator import predict, predictM, get_eval_metric_fn, EarlyStopping
+from .evaluator import predict, predictM, integrated_gradients, get_eval_metric_fn, EarlyStopping
 from .modeling_transtab import TransTabFeatureExtractor
 from .trainer_utils import SupervisedTrainCollator, TrainDataset
 from .trainer_utils import get_parameter_names
