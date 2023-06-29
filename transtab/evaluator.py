@@ -63,6 +63,7 @@ def integrated_gradients(model, x_test, y_test=None, baselines=None, n_steps=50,
         pred_list, loss_list = [], []
         for i in range(0, len(x_test), eval_batch_size):
             bs_x_test = x_test.iloc[i:i+eval_batch_size]
+            
             ###########
             #print(bs_x_test.dim(), bs_x_test.shape, type(bs_x_test))
             print(type(bs_x_test))
@@ -70,24 +71,24 @@ def integrated_gradients(model, x_test, y_test=None, baselines=None, n_steps=50,
             inputs = torch.from_numpy(bs_x_test.to_numpy()).type(torch.FloatTensor)
             print(inputs.dim())
 
-            #if inputs.dim() == 2: inputs = inputs.unsqueeze(0)
+            if inputs.dim() == 2: inputs = inputs.unsqueeze(0)
             
             if baselines == None: baselines = torch.zeros_like(inputs)
     
             # k/m in the formula
             alphas = torch.linspace(0, 1, n_steps).tolist()
 
-             # direct path from baseline to input. shape : ([n_steps, n_features], )
+            # direct path from baseline to input. shape : ([n_steps, n_features], )
             scaled_features = tuple(torch.cat( [baseline + alpha * (input - baseline) 
                                                 for alpha in alphas], dim=0).requires_grad_()
                                                 for input, baseline in zip(inputs, baselines)
                                                 )
+            
+            bs_x_test[:1] = scaled_features
 
-
-            with torch.no_grad():
+            with torch.no_grad(): 
                 prediction, loss, _, _ = model(bs_x_test, y_test) #todo
             
-
             #############
 
 
