@@ -6,7 +6,7 @@ from .modeling_transtab import TransTabRegressor, TransTabClassifier, TransTabCl
 from .modeling_transtab import TransTabForCL
 from .modeling_transtab import TransTabInputEncoder, TransTabModel
 from .dataset import load_data
-from .evaluator import predict, predictM, evaluate
+from .evaluator import predict, predictM, integrated_gradients, evaluate
 from .trainer import Trainer
 from .trainer_utils import TransTabCollatorForCL
 from .trainer_utils import random_seed
