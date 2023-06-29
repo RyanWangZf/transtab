@@ -8,7 +8,7 @@ from sklearn.metrics import roc_auc_score, accuracy_score, mean_squared_error
 
 from . import constants
 
-def integrated_gradients(model, x_test, y_test=None, return_loss=False, eval_batch_size=256, objective='classification'):
+def integrated_gradients(model, x_test, y_test=None, baselines=None, n_steps=50, target=1, numpy=False, return_loss=False, eval_batch_size=256, objective='classification'):
     '''Compute feature importances by TransTab.
 
     Parameters
@@ -66,22 +66,41 @@ def integrated_gradients(model, x_test, y_test=None, return_loss=False, eval_bat
             ###########
             #print(bs_x_test.dim(), bs_x_test.shape, type(bs_x_test))
             print(type(bs_x_test))
-
-            if baselines == None: baselines = torch.zeros_like(inputs)
             
+            input = torch.from_numpy(bs_x_test).type(torch.FloatTensor)
+            print(inputs.dim())
+
+            #if inputs.dim() == 2: inputs = inputs.unsqueeze(0)
+            
+            if baselines == None: baselines = torch.zeros_like(inputs)
+    
             # k/m in the formula
             alphas = torch.linspace(0, 1, n_steps).tolist()
-            #############
+
+             # direct path from baseline to input. shape : ([n_steps, n_features], )
+            scaled_features = tuple(torch.cat( [baseline + alpha * (input - baseline) 
+                                                for alpha in alphas], dim=0).requires_grad_()
+                                                for input, baseline in zip(inputs, baselines)
+                                                )
+
 
             with torch.no_grad():
                 prediction, loss, _, _ = model(bs_x_test, y_test) #todo
-            if loss is not None:
-                loss_list.append(loss.item())
-            if prediction is not None:
-                pred_list.append(prediction.detach().cpu().numpy())
+            
 
-        pred_all = np.concatenate(pred_list, 0)
-        pred_all = pred_all.flatten()
+            #############
+
+
+
+           # with torch.no_grad():
+            #    prediction, loss, _, _ = model(bs_x_test, y_test) #todo
+            #if loss is not None:
+             #   loss_list.append(loss.item())
+            #if prediction is not None:
+             #   pred_list.append(prediction.detach().cpu().numpy())
+
+        #pred_all = np.concatenate(pred_list, 0)
+        #pred_all = pred_all.flatten()
 
     if return_loss:
         avg_loss = np.mean(loss_list)
