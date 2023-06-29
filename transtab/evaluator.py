@@ -64,8 +64,9 @@ def integrated_gradients(model, x_test, y_test=None, return_loss=False, eval_bat
         for i in range(0, len(x_test), eval_batch_size):
             bs_x_test = x_test.iloc[i:i+eval_batch_size]
             ###########
-            print(bs_x_test.dim(), bs_x_test.shape, type(bs_x_test))
-            
+            #print(bs_x_test.dim(), bs_x_test.shape, type(bs_x_test))
+            print(type(bs_x_test))
+
             if baselines == None: baselines = torch.zeros_like(inputs)
             
             # k/m in the formula
