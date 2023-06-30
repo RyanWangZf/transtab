@@ -75,10 +75,10 @@ def integrated_gradients(model, x_test, y_test=None, baselines=None, n_steps=50,
             if baselines == None: baselines = torch.zeros_like(inputs)
             print(inputs.shape)
             print(baselines.shape)
-            
+
             # k/m in the formula
             alphas = torch.linspace(0, 1, n_steps).tolist()
-            print(alphas.shape)
+            print(len(alphas))
 
             # direct path from baseline to input. shape : ([n_steps, n_features], )
             scaled_features = tuple(torch.cat( [baseline + alpha * (input - baseline) 
