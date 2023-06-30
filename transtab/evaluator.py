@@ -93,11 +93,9 @@ def integrated_gradients(model, x_test, y_test=None, baselines=None, n_steps=50,
             # creating the dataframe
             bs_x_test_df = pd.DataFrame(data = scaled_features[0].detach().numpy(),
                                         columns = bs_x_test.columns)
-            
-            bs_x_test[:50] = scaled_features[0].detach().numpy()
              
             #with torch.no_grad(): 
-            prediction, loss, _, _ = model(bs_x_test, y_test[:50]) #todo
+            prediction, loss, _, _ = model(bs_x_test_df, y_test[:50]) #todo
             
             #############
 
