@@ -88,6 +88,11 @@ def integrated_gradients(model, x_test, y_test=None, baselines=None, n_steps=50,
         
             #print(type(bs_x_test[:1] ), type(scaled_features)) 
             print(scaled_features[0].shape)          
+            
+            # creating the dataframe
+            bs_x_test_df = pd.DataFrame(data = scaled_features[0].detach().numpy(),
+                                        columns = bs_x_test.columns)
+            
             bs_x_test[:50] = scaled_features[0].detach().numpy()
              
             #with torch.no_grad(): 
