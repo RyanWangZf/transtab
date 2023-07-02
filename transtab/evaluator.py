@@ -97,6 +97,10 @@ def integrated_gradients(model, x_test, y_test=None, baselines=None, n_steps=50,
             #with torch.no_grad(): 
             prediction, loss, _, _ = model(bs_x_test_df, y_test) #todo
             print(prediction)
+
+            grads = grad(outputs=torch.unbind(prediction), inputs=scaled_features)
+            grads = grad(outputs=torch.unbind(prediction), inputs=scaled_features[0])
+
             #############
 
 
