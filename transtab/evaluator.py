@@ -3,6 +3,7 @@ import os
 import pdb
 
 import torch
+from torch.autograd import grad
 import pandas as pd
 import numpy as np
 from sklearn.metrics import roc_auc_score, accuracy_score, mean_squared_error
@@ -98,7 +99,6 @@ def integrated_gradients(model, x_test, y_test=None, baselines=None, n_steps=50,
             prediction, loss, _, _ = model(bs_x_test_df, y_test) #todo
             print(prediction)
 
-            grads = grad(outputs=torch.unbind(prediction), inputs=scaled_features)
             grads = grad(outputs=torch.unbind(prediction), inputs=scaled_features[0])
 
             #############
