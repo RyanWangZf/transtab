@@ -409,7 +409,7 @@ class TransTabTransformerLayer(nn.Module):
         key_padding_mask = ~key_padding_mask.bool()
         #x = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)[0]
         x, attention_weights  = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)
-        #print( len(attention_weights),attention_weights.size() )
+        print( len(attention_weights),attention_weights.size() )
         return self.dropout1(x)
 
     # feed forward block
@@ -992,8 +992,6 @@ class TransTabRegressor(TransTabModel):
             #print(encoder_output, type(encoder_output), encoder_output.size()) #todo
             
             # make prediction
-            print('encoder output')
-            print(encoder_output.shape)
             prediction = self.regressor(encoder_output) # take the CLS token representation 
 
             # Obtain the linear weights
