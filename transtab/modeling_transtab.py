@@ -759,8 +759,6 @@ class TransTabModel(nn.Module):
 
         # go through transformers, get final cls embedding
         encoder_output = self.encoder(**embeded)
-        print('encoder output')
-        print(encoder_output.shape)
         
         # get cls token
         final_cls_embedding = encoder_output[:,0,:]
@@ -994,6 +992,8 @@ class TransTabRegressor(TransTabModel):
             #print(encoder_output, type(encoder_output), encoder_output.size()) #todo
             
             # make prediction
+            print('encoder output')
+            print(encoder_output.shape)
             prediction = self.regressor(encoder_output) # take the CLS token representation 
 
             # Obtain the linear weights
