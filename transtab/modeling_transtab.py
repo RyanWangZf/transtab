@@ -772,7 +772,9 @@ class TransTabModel(nn.Module):
 
         # go through transformers, get final cls embedding
         encoder_output = self.encoder(**embeded)
-
+        print('encoder output')
+        print(encoder_output.shape)
+        
         # get cls token
         final_cls_embedding = encoder_output[:,0,:]
         return final_cls_embedding
