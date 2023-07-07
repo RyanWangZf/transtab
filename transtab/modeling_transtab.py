@@ -412,6 +412,15 @@ class TransTabTransformerLayerM(nn.Module):
         print( len(attention_weights), attention_weights.size() )
         return self.dropout1(x)
 
+    # self-attention block
+    def _sa_blockM(self, x: Tensor, attn_mask: Optional[Tensor], key_padding_mask: Optional[Tensor]) -> Tensor:
+        src = x
+        key_padding_mask = ~key_padding_mask.bool()
+        #x = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)[0]
+        x, attention_weights  = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)
+        print( len(attention_weights), attention_weights.size() )
+        return self.dropout1(x)
+
     # feed forward block
     def _ff_block(self, x: Tensor) -> Tensor:
         g = self.gate_act(self.gate_linear(x))
@@ -425,7 +434,7 @@ class TransTabTransformerLayerM(nn.Module):
             state['activation'] = F.relu
         super().__setstate__(state)
 
-    def forward(self, src, src_mask= None, src_key_padding_mask= None) -> Tensor:
+    def forward(self, src, src_mask= None, src_key_padding_mask = None, ) -> Tensor:
         r"""Pass the input through the encoder layer.
 
         Args:
@@ -438,17 +447,28 @@ class TransTabTransformerLayerM(nn.Module):
         """
         # see Fig. 1 of https://arxiv.org/pdf/2002.04745v1.pdf
         x = src
-        if self.use_layer_norm:
-            if self.norm_first:
-                x = x + self._sa_block(self.norm1(x), src_mask, src_key_padding_mask)
-                x = x + self._ff_block(self.norm2(x))
-            else:
-                x = self.norm1(x + self._sa_block(x, src_mask, src_key_padding_mask))
-                x = self.norm2(x + self._ff_block(x))
+        if (feat_imps==False):
+            if self.use_layer_norm:
+                if self.norm_first:
+                    x = x + self._sa_block(self.norm1(x), src_mask, src_key_padding_mask)
+                    x = x + self._ff_block(self.norm2(x))
+                else:
+                    x = self.norm1(x + self._sa_block(x, src_mask, src_key_padding_mask))
+                    x = self.norm2(x + self._ff_block(x))
 
-        else: # do not use layer norm
-                x = x + self._sa_block(x, src_mask, src_key_padding_mask)
-                x = x + self._ff_block(x)
+            else: # do not use layer norm
+                    x = x + self._sa_block(x, src_mask, src_key_padding_mask)
+                    x = x + self._ff_block(x)
+        else:
+            if self.use_layer_norm:
+                if self.norm_first:
+                    x = self._sa_blockM(self.norm1(x), src_mask, src_key_padding_mask)
+                else:
+                    x = self.norm1(self._sa_blockM(x, src_mask, src_key_padding_mask))
+
+            else: # do not use layer norm
+                x = self._sa_blockM(x, src_mask, src_key_padding_mask)
+     
         return x
 
 
@@ -492,7 +512,7 @@ class TransTabTransformerLayer(nn.Module):
         key_padding_mask = ~key_padding_mask.bool()
         #x = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)[0]
         x, attention_weights  = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)
-        print( len(attention_weights), attention_weights.size() )
+        #print( len(attention_weights), attention_weights.size() )
         return self.dropout1(x)
 
     # feed forward block
@@ -1042,7 +1062,7 @@ class TransTabRegressor(TransTabModel):
         self.loss_fn = nn.MSELoss(reduction='none')
         self.to(device)
 
-    def forward(self, x, y=None):
+    def forward(self, x, y=None, feat_imps=False):
             '''Make forward pass given the input feature ``x`` and label ``y`` (optional).
             Parameters
             ----------
@@ -1084,7 +1104,7 @@ class TransTabRegressor(TransTabModel):
             #outputs = self.cls_token(**outputs) ##todo we pass to these
             
             # go through transformers, get the first cls embedding
-            encoder_output = self.encoder(**outputs) # bs, seqlen+1, hidden_dim
+            encoder_output = self.encoder(**outputs, feat_imps) # bs, seqlen+1, hidden_dim
             #print(encoder_output, type(encoder_output), encoder_output.size()) #todo
             print(type(encoder_output), encoder_output.size()) #todo
             
