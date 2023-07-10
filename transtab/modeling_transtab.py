@@ -628,7 +628,7 @@ class TransTabEncoder(nn.Module):
         super().__init__()
         self.transformer_encoder = nn.ModuleList(
             [
-            TransTabTransformerLayer(
+            TransTabTransformerLayerM(
                 d_model=hidden_dim,
                 nhead=num_attention_head,
                 dropout=hidden_dropout_prob,
@@ -641,7 +641,7 @@ class TransTabEncoder(nn.Module):
             ]
             )
         if num_layer > 1:
-            encoder_layer = TransTabTransformerLayer(d_model=hidden_dim,
+            encoder_layer = TransTabTransformerLayerM(d_model=hidden_dim,
                 nhead=num_attention_head,
                 dropout=hidden_dropout_prob,
                 dim_feedforward=ffn_dim,
