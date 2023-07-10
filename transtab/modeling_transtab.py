@@ -1095,7 +1095,7 @@ class TransTabRegressor(TransTabModel):
 
             #outputs = self.input_encoder.feature_processor(**inputs) ##todo these are the targets
             #outputs = self.cls_token(**outputs) ##todo we pass to these
-            
+            print(outputs.shape())
             # go through transformers, get the embeddings and the attention weights
             encoder_output, attention_output_weights = self.encoder(**outputs) # bs, seqlen+1, hidden_dim
             #print(encoder_output, type(encoder_output), encoder_output.size()) #todo
