@@ -457,7 +457,6 @@ def build_encoder(
         the directory to load the pretrained TransTab model.
     '''
     if num_layer == 0:
-        print('test1') ##todo
         feature_extractor = TransTabFeatureExtractor(
             categorical_columns=categorical_columns,
             numerical_columns=numerical_columns,
@@ -475,7 +474,6 @@ def build_encoder(
         enc.load(checkpoint)
         
     else:
-        print('test2')
         enc = TransTabModel(
             categorical_columns=categorical_columns,
             numerical_columns=numerical_columns,
