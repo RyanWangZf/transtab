@@ -432,7 +432,7 @@ class TransTabTransformerLayerM(nn.Module):
             state['activation'] = F.relu
         super().__setstate__(state)
 
-    def forward(self, src, src_mask= None, src_key_padding_mask = None, attention_weights=False) -> Tensor:
+    def forward(self, src, src_mask = None, src_key_padding_mask = None) -> Tensor:
         r"""Pass the input through the encoder layer.
 
         Args:
@@ -459,9 +459,9 @@ class TransTabTransformerLayerM(nn.Module):
             sa_blockM_0, sa_blockM_1 = self._sa_blockM(x, src_mask, src_key_padding_mask)  
             x = x + sa_blockM_0
             x = x + self._ff_block(x)
-            
-        return x, sa_blockM_1
 
+        #return encoded output and the attention output weights
+        return x, sa_blockM_1
 
 
 class TransTabTransformerLayer(nn.Module):
@@ -660,8 +660,10 @@ class TransTabEncoder(nn.Module):
         '''
         outputs = embedding
         for i, mod in enumerate(self.transformer_encoder):
-            outputs = mod(outputs, src_key_padding_mask=attention_mask)
-        return outputs
+            outputs, attention_output_weights  = mod(outputs, src_key_padding_mask=attention_mask)
+            print(outputs.size(), attention_output_weights.size())
+            print('yay')
+        return outputs, attention_output_weights
 
 class TransTabLinearRegressor(nn.Module):
     def __init__(self,
@@ -1084,7 +1086,7 @@ class TransTabRegressor(TransTabModel):
             # go through transformers, get the embeddings and the attention weights
             encoder_output, attention_output_weights = self.encoder(**outputs) # bs, seqlen+1, hidden_dim
             #print(encoder_output, type(encoder_output), encoder_output.size()) #todo
-            print(type(encoder_output), encoder_output.size(), attention_output_weights.size()) #todo
+            #print(type(encoder_output), encoder_output.size(), attention_output_weights.size()) #todo
             
             # make prediction
             prediction = self.regressor(encoder_output) # take the CLS token representation 
