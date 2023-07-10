@@ -660,8 +660,9 @@ class TransTabEncoder(nn.Module):
         '''
         outputs = embedding
         for i, mod in enumerate(self.transformer_encoder):
+            print(outputs.size())
             outputs, attention_output_weights = mod(outputs, src_key_padding_mask=attention_mask)
-            #print(outputs.size(), attention_output_weights.size())
+            print(outputs.size(), attention_output_weights.size())
             #print(outputs, attention_output_weights)
         return outputs, attention_output_weights
 
