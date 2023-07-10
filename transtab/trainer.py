@@ -122,7 +122,7 @@ class Trainer:
                 for dataindex in range(len(self.trainloader_list)):
                     for data in self.trainloader_list[dataindex]:
                         self.optimizer.zero_grad()
-                        logits, loss, _, _ = self.model(data[0], data[1]) ##todo
+                        logits, loss, _, _, _ = self.model(data[0], data[1]) ##todo
                         loss.backward()
                         self.optimizer.step()
                         train_loss_all += loss.item()
@@ -148,7 +148,7 @@ class Trainer:
                 for dataindex in range(len(self.trainloader_list)):
                     for data in self.trainloader_list[dataindex]:
                         self.optimizer.zero_grad()
-                        prediction, loss, _, _ = self.model(data[0], data[1]) ##todo done
+                        prediction, loss, _, _,  = self.model(data[0], data[1]) ##todo done
                         loss.backward()
                         self.optimizer.step()
                         train_loss_all += loss.item()
@@ -194,7 +194,7 @@ class Trainer:
                             label = label.values
                         y_test.append(label)
                     with torch.no_grad():
-                        logits, loss, _, _ = self.model(data[0], data[1])
+                        logits, loss, _, _, _ = self.model(data[0], data[1])
                     if loss is not None:
                         loss_list.append(loss.item())
                     if logits is not None: ##todo
@@ -227,7 +227,7 @@ class Trainer:
                             label = label.values
                         y_test.append(label)
                     with torch.no_grad():
-                        prediction, loss, _, _ = self.model(data[0], data[1])
+                        prediction, loss, _, _, _ = self.model(data[0], data[1])
                     if loss is not None:
                         loss_list.append(loss.item())
                     if prediction is not None:
