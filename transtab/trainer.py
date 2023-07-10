@@ -148,7 +148,7 @@ class Trainer:
                 for dataindex in range(len(self.trainloader_list)):
                     for data in self.trainloader_list[dataindex]:
                         self.optimizer.zero_grad()
-                        prediction, loss, _, _,  = self.model(data[0], data[1]) ##todo done
+                        prediction, loss, _, _, _ = self.model(data[0], data[1]) ##todo done
                         loss.backward()
                         self.optimizer.step()
                         train_loss_all += loss.item()
