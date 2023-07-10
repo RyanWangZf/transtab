@@ -502,7 +502,7 @@ class TransTabTransformerLayer(nn.Module):
         src = x
         key_padding_mask = ~key_padding_mask.bool()
         #x = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)[0]
-        x, attention_weights  = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)
+        x, attention_weights = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)
         #print( len(attention_weights), attention_weights.size() )
         return self.dropout1(x)
 
