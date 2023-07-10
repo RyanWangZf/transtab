@@ -373,6 +373,7 @@ def build_encoder(
         the directory to load the pretrained TransTab model.
     '''
     if num_layer == 0:
+        print('test1') ##todo
         feature_extractor = TransTabFeatureExtractor(
             categorical_columns=categorical_columns,
             numerical_columns=numerical_columns,
@@ -386,11 +387,11 @@ def build_encoder(
             hidden_dropout_prob=hidden_dropout_prob,
             device=device,
             )
-
         enc = TransTabInputEncoder(feature_extractor, feature_processor)
         enc.load(checkpoint)
         
     else:
+        print('test2')
         enc = TransTabModel(
             categorical_columns=categorical_columns,
             numerical_columns=numerical_columns,
