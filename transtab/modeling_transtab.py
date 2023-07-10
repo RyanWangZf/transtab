@@ -445,31 +445,24 @@ class TransTabTransformerLayerM(nn.Module):
         """
         # see Fig. 1 of https://arxiv.org/pdf/2002.04745v1.pdf
         x = src
-        if (attention_weights==True):
-             if self.use_layer_norm:
-                if self.norm_first:
-                    x, attention_output_weights = self._sa_blockM(self.norm1(x), src_mask, src_key_padding_mask)
-                else:
-                    x, attention_output_weights = self.norm1(self._sa_blockM(x, src_mask, src_key_padding_mask))
+        if self.use_layer_norm:
+            if self.norm_first:
+                sa_blockM_0, sa_blockM_1 = self._sa_blockM(self.norm1(x), src_mask, src_key_padding_mask)
+                x = x + sa_block_0
+                x = x + self._ff_block(self.norm2(x))
+            else:
+                sa_blockM_0, sa_blockM_1 = self._sa_blockM(x, src_mask, src_key_padding_mask)
+                x = self.norm1(x + sa_blockM_0)
+                x = self.norm2(x + self._ff_block(x))
 
-            else: # do not use layer norm
-                x, attention_output_weights = self._sa_blockM(x, src_mask, src_key_padding_mask)
-     
-            return x, attention_output_weights 
+        else: # do not use layer norm
+            sa_blockM_0, sa_blockM_1 = self._sa_blockM(x, src_mask, src_key_padding_mask)  
+            x = x + sa_blockM_0
+            x = x + self._ff_block(x)
             
-        else:
-            if self.use_layer_norm:
-                if self.norm_first:
-                    x = x + self._sa_block(self.norm1(x), src_mask, src_key_padding_mask)
-                    x = x + self._ff_block(self.norm2(x))
-                else:
-                    x = self.norm1(x + self._sa_block(x, src_mask, src_key_padding_mask))
-                    x = self.norm2(x + self._ff_block(x))
+        return x, sa_blockM_1
 
-            else: # do not use layer norm
-                    x = x + self._sa_block(x, src_mask, src_key_padding_mask)
-                    x = x + self._ff_block(x)
-            return x
+
 
 class TransTabTransformerLayer(nn.Module):
     __constants__ = ['batch_first', 'norm_first']
@@ -1101,18 +1094,11 @@ class TransTabRegressor(TransTabModel):
             #outputs = self.input_encoder.feature_processor(**inputs) ##todo these are the targets
             #outputs = self.cls_token(**outputs) ##todo we pass to these
             
-            if (attention_weights==False):
-                # go through transformers, get the first cls embedding
-                encoder_output = self.encoder(**outputs, attention_weights) # bs, seqlen+1, hidden_dim
-                #print(encoder_output, type(encoder_output), encoder_output.size()) #todo
-                print(type(encoder_output), encoder_output.size()) #todo
+            # go through transformers, get the embeddings and the attention weights
+            encoder_output, attention_output_weights = self.encoder(**outputs) # bs, seqlen+1, hidden_dim
+            #print(encoder_output, type(encoder_output), encoder_output.size()) #todo
+            print(type(encoder_output), encoder_output.size(), attention_output_weights.size()) #todo
             
-            else:
-                # go through transformers, get the embeddings and the attention weights
-                encoder_output, attention_output_weights = self.encoder(**outputs, attention_weights) # bs, seqlen+1, hidden_dim
-                #print(encoder_output, type(encoder_output), encoder_output.size()) #todo
-                print(type(encoder_output), encoder_output.size(), attention_output_weights.size()) #todo
-
             # make prediction
             prediction = self.regressor(encoder_output) # take the CLS token representation 
 
