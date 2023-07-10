@@ -1056,7 +1056,7 @@ class TransTabRegressor(TransTabModel):
         self.loss_fn = nn.MSELoss(reduction='none')
         self.to(device)
 
-    def forward(self, x, y=None, attention_weights=False):
+    def forward(self, x, y=None):
             '''Make forward pass given the input feature ``x`` and label ``y`` (optional).
             Parameters
             ----------
