@@ -1064,14 +1064,14 @@ class TransTabRegressor(TransTabModel):
                 inputs = x
                 
                 outputs = self.input_encoder.feature_processor(**inputs) ##todo these are the targets
-                #outputs = self.cls_token(**outputs) ##todo we pass to these
+                outputs = self.cls_token(**outputs) ##todo we pass to these
             
             elif isinstance(x, pd.DataFrame):
                 # input is dataframe
                 inputs = self.input_encoder.feature_extractor(x)
                 
                 outputs = self.input_encoder.feature_processor(**inputs) ##todo these are the targets
-                #outputs = self.cls_token(**outputs) ##todo we pass to these
+                outputs = self.cls_token(**outputs) ##todo we pass to these
             
             elif isinstance(x, torch.Tensor): #todo
                 inputs = {}
