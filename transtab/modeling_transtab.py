@@ -652,7 +652,7 @@ class TransTabEncoder(nn.Module):
                 activation=activation,
                 )
             stacked_transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layer-1)
-            self.transformer_encoder.append(stacked_transformer)
+            #self.transformer_encoder.append(stacked_transformer)
 
     def forward(self, embedding, attention_mask=None, **kwargs) -> Tensor:
         '''args:
@@ -660,9 +660,9 @@ class TransTabEncoder(nn.Module):
         '''
         outputs = embedding
         for i, mod in enumerate(self.transformer_encoder):
-            #print(outputs.size())
+            print(outputs.size())
             outputs, attention_output_weights = mod(outputs, src_key_padding_mask=attention_mask)
-            #print(outputs.size(), attention_output_weights.size())
+            print(outputs.size(), attention_output_weights.size())
             #print(outputs, attention_output_weights)
         return outputs, attention_output_weights
 
