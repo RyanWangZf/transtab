@@ -407,15 +407,15 @@ class TransTabTransformerLayerM(nn.Module):
     def _sa_block(self, x: Tensor, attn_mask: Optional[Tensor], key_padding_mask: Optional[Tensor]) -> Tensor:
         src = x
         key_padding_mask = ~key_padding_mask.bool()
-        #x = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)[0]
-        x, _ = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)
+        #x = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask)[0]
+        x, _ = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask)
         return self.dropout1(x)
 
     # self-attention block
     def _sa_blockM(self, x: Tensor, attn_mask: Optional[Tensor], key_padding_mask: Optional[Tensor]) -> Tensor:
         src = x
         key_padding_mask = ~key_padding_mask.bool()
-        x, attention_output_weights = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)
+        x, attention_output_weights = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask)
         #print( len(attention_output_weights), attention_output_weights.size() )
         return self.dropout1(x), attention_output_weights
 
@@ -1082,7 +1082,7 @@ class TransTabRegressor(TransTabModel):
 
             #outputs = self.input_encoder.feature_processor(**inputs) ##todo these are the targets
             #outputs = self.cls_token(**outputs) ##todo we pass to these
-            print(outputs.shape())
+            
             # go through transformers, get the embeddings and the attention weights
             encoder_output, attention_output_weights = self.encoder(**outputs) # bs, seqlen+1, hidden_dim
             #print(encoder_output, type(encoder_output), encoder_output.size()) #todo
