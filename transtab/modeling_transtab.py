@@ -660,9 +660,9 @@ class TransTabEncoder(nn.Module):
         '''
         outputs = embedding
         for i, mod in enumerate(self.transformer_encoder):
-            print(outputs.size())
+            #print(outputs.size())
             outputs, attention_output_weights = mod(outputs, src_key_padding_mask=attention_mask)
-            print(outputs.size(), attention_output_weights.size())
+            #print(outputs.size(), attention_output_weights.size())
             #print(outputs, attention_output_weights)
         return outputs, attention_output_weights
 
@@ -1064,14 +1064,14 @@ class TransTabRegressor(TransTabModel):
                 inputs = x
                 
                 outputs = self.input_encoder.feature_processor(**inputs) ##todo these are the targets
-                outputs = self.cls_token(**outputs) ##todo we pass to these
+                #outputs = self.cls_token(**outputs) ##todo we pass to these
             
             elif isinstance(x, pd.DataFrame):
                 # input is dataframe
                 inputs = self.input_encoder.feature_extractor(x)
                 
                 outputs = self.input_encoder.feature_processor(**inputs) ##todo these are the targets
-                outputs = self.cls_token(**outputs) ##todo we pass to these
+                #outputs = self.cls_token(**outputs) ##todo we pass to these
             
             elif isinstance(x, torch.Tensor): #todo
                 inputs = {}
