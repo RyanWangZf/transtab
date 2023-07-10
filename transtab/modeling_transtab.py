@@ -408,18 +408,16 @@ class TransTabTransformerLayerM(nn.Module):
         src = x
         key_padding_mask = ~key_padding_mask.bool()
         #x = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)[0]
-        x, attention_weights  = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)
-        print( len(attention_weights), attention_weights.size() )
+        x, _ = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)
         return self.dropout1(x)
 
     # self-attention block
     def _sa_blockM(self, x: Tensor, attn_mask: Optional[Tensor], key_padding_mask: Optional[Tensor]) -> Tensor:
         src = x
         key_padding_mask = ~key_padding_mask.bool()
-        #x = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)[0]
-        x, attention_weights  = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)
-        print( len(attention_weights), attention_weights.size() )
-        return self.dropout1(x)
+        x, attention_output_weights = self.self_attn(x, x, x, attn_mask=attn_mask, key_padding_mask=key_padding_mask,)
+        #print( len(attention_output_weights), attention_output_weights.size() )
+        return self.dropout1(x), attention_output_weights
 
     # feed forward block
     def _ff_block(self, x: Tensor) -> Tensor:
@@ -434,7 +432,7 @@ class TransTabTransformerLayerM(nn.Module):
             state['activation'] = F.relu
         super().__setstate__(state)
 
-    def forward(self, src, src_mask= None, src_key_padding_mask = None, ) -> Tensor:
+    def forward(self, src, src_mask= None, src_key_padding_mask = None, attention_weights=False) -> Tensor:
         r"""Pass the input through the encoder layer.
 
         Args:
@@ -447,7 +445,19 @@ class TransTabTransformerLayerM(nn.Module):
         """
         # see Fig. 1 of https://arxiv.org/pdf/2002.04745v1.pdf
         x = src
-        if (feat_imps==False):
+        if (attention_weights==True):
+             if self.use_layer_norm:
+                if self.norm_first:
+                    x, attention_output_weights = self._sa_blockM(self.norm1(x), src_mask, src_key_padding_mask)
+                else:
+                    x, attention_output_weights = self.norm1(self._sa_blockM(x, src_mask, src_key_padding_mask))
+
+            else: # do not use layer norm
+                x, attention_output_weights = self._sa_blockM(x, src_mask, src_key_padding_mask)
+     
+            return x, attention_output_weights 
+            
+        else:
             if self.use_layer_norm:
                 if self.norm_first:
                     x = x + self._sa_block(self.norm1(x), src_mask, src_key_padding_mask)
@@ -459,19 +469,7 @@ class TransTabTransformerLayerM(nn.Module):
             else: # do not use layer norm
                     x = x + self._sa_block(x, src_mask, src_key_padding_mask)
                     x = x + self._ff_block(x)
-        else:
-            if self.use_layer_norm:
-                if self.norm_first:
-                    x = self._sa_blockM(self.norm1(x), src_mask, src_key_padding_mask)
-                else:
-                    x = self.norm1(self._sa_blockM(x, src_mask, src_key_padding_mask))
-
-            else: # do not use layer norm
-                x = self._sa_blockM(x, src_mask, src_key_padding_mask)
-     
-        return x
-
-
+            return x
 
 class TransTabTransformerLayer(nn.Module):
     __constants__ = ['batch_first', 'norm_first']
@@ -1049,7 +1047,7 @@ class TransTabRegressor(TransTabModel):
         self.loss_fn = nn.MSELoss(reduction='none')
         self.to(device)
 
-    def forward(self, x, y=None, feat_imps=False):
+    def forward(self, x, y=None, attention_weights=False):
             '''Make forward pass given the input feature ``x`` and label ``y`` (optional).
             Parameters
             ----------
@@ -1090,11 +1088,18 @@ class TransTabRegressor(TransTabModel):
             #outputs = self.input_encoder.feature_processor(**inputs) ##todo these are the targets
             #outputs = self.cls_token(**outputs) ##todo we pass to these
             
-            # go through transformers, get the first cls embedding
-            encoder_output = self.encoder(**outputs, feat_imps) # bs, seqlen+1, hidden_dim
-            #print(encoder_output, type(encoder_output), encoder_output.size()) #todo
-            print(type(encoder_output), encoder_output.size()) #todo
+            if (attention_weights==False):
+                # go through transformers, get the first cls embedding
+                encoder_output = self.encoder(**outputs, attention_weights) # bs, seqlen+1, hidden_dim
+                #print(encoder_output, type(encoder_output), encoder_output.size()) #todo
+                print(type(encoder_output), encoder_output.size()) #todo
             
+            else:
+                # go through transformers, get the embeddings and the attention weights
+                encoder_output, attention_output_weights = self.encoder(**outputs, attention_weights) # bs, seqlen+1, hidden_dim
+                #print(encoder_output, type(encoder_output), encoder_output.size()) #todo
+                print(type(encoder_output), encoder_output.size(), attention_output_weights.size()) #todo
+
             # make prediction
             prediction = self.regressor(encoder_output) # take the CLS token representation 
 
@@ -1109,7 +1114,7 @@ class TransTabRegressor(TransTabModel):
             else:
                 loss = None
 
-            return prediction, loss, encoder_output, linear_weights ##todo
+            return prediction, loss, encoder_output, linear_weights, attention_output_weights ##todo
 
 class TransTabClassifierM(TransTabModel):
     '''The classifier model subclass from :class:`transtab.modeling_transtab.TransTabModel`.
