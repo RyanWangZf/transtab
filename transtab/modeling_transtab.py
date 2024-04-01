@@ -1392,7 +1392,8 @@ class TransTabClassifier(TransTabModel):
         else:
             loss = None
 
-        return logits, loss
+        return logits, loss, encoder_output
+
     
 class TransTabRegressor(TransTabModel):
     '''The regression model subclass from :class:`transtab.modeling_transtab.TransTabModel`.
