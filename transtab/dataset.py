@@ -9,7 +9,7 @@ import openml
 from loguru import logger
 
 # TODO
-# organize teh dataset_config for the load_data API.
+# organize the dataset_config for the load_data API.
 # dataset_config = {
 # 'dataname': { 'cat':[],'bin':[], 'num':[], 
 # 'cols':[]}
@@ -81,6 +81,8 @@ def load_data(dataname, dataset_config=None, encode_cat=False, data_cut=None, se
 
     '''
     if dataset_config is None: dataset_config = OPENML_DATACONFIG
+    # 2024年7月3日15点42分
+    # isinstance(a,b): 判断a是否是b类型，返回bool类型
     if isinstance(dataname, str):
         # load a single tabular data
         return load_single_data(dataname=dataname, dataset_config=dataset_config, encode_cat=encode_cat, data_cut=data_cut, seed=seed)
@@ -97,6 +99,8 @@ def load_data(dataname, dataset_config=None, encode_cat=False, data_cut=None, se
             num_col_list.extend(num_cols)
             cat_col_list.extend(cat_cols)
             bin_col_list.extend(bin_cols)
+            # 2024年7月3日15点50分
+            # a.append(b): 把元素b加到列表a的末尾
             all_list.append(allset)
             train_list.append(trainset)
             val_list.append(valset)
@@ -121,6 +125,7 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
     if os.path.exists(dataname):
         print(f'load from local data dir {dataname}')
         filename = os.path.join(dataname, 'data_processed.csv')
+        # index_col=False/0 来设定pandas不适用第一列作为行索引。
         df = pd.read_csv(filename, index_col=0)
         y = df['target_label']
         X = df.drop(['target_label'],axis=1)
@@ -189,7 +194,7 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
     # start processing features
     # process num
     if len(num_cols) > 0:
-        for col in num_cols: X[col].fillna(X[col].mode()[0], inplace=True)
+        for col in num_cols: X[col].fillna(X[col].mode()[0], inplace=True) #inplace 如果为True，则在原DataFrame上进行操作，返回值为None
         X[num_cols] = MinMaxScaler().fit_transform(X[num_cols])
 
     if len(cat_cols) > 0:
