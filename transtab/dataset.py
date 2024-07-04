@@ -96,11 +96,12 @@ def load_data(dataname, dataset_config=None, encode_cat=False, data_cut=None, se
             data_config = dataset_config.get(dataname_, None)
             allset, trainset, valset, testset, cat_cols, num_cols, bin_cols = \
                 load_single_data(dataname_, dataset_config=data_config, encode_cat=encode_cat, data_cut=data_cut, seed=seed)
+            # a.extend(b): 把元素b当成列表，将其中元素加到a中，作为列表a的一部分
             num_col_list.extend(num_cols)
             cat_col_list.extend(cat_cols)
             bin_col_list.extend(bin_cols)
             # 2024年7月3日15点50分
-            # a.append(b): 把元素b加到列表a的末尾
+            # a.append(b): 把元素b整个作为一个元素加到列表a的末尾
             all_list.append(allset)
             train_list.append(trainset)
             val_list.append(valset)
@@ -122,10 +123,11 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
         num_cols, cat_cols, bin_cols: the list of numerical/categorical/binary column names
     '''
     print('####'*10)
+    # print(f'数据集{dataname}已经存在')
     if os.path.exists(dataname):
         print(f'load from local data dir {dataname}')
         filename = os.path.join(dataname, 'data_processed.csv')
-        # index_col=False/0 来设定pandas不适用第一列作为行索引。
+        # index_col=False/0 来设置pandas不使用第一列作为行索引。
         df = pd.read_csv(filename, index_col=0)
         y = df['target_label']
         X = df.drop(['target_label'],axis=1)
@@ -159,10 +161,17 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
 
             if 'num' in dataset_config:
                 num_cols = dataset_config['num']
-        
+    
+    # print(f'数据集{dataname}不存在')
     else:
         dataset = openml.datasets.get_dataset(dataname)
-        X,y,categorical_indicator, attribute_names = dataset.get_data(dataset_format='dataframe', target=dataset.default_target_attribute)
+        # 当指定了目标变量，get_data 方法会将数据集分成两部分：特征数据 X 和目标数据 y。
+        # X 是一个 DataFrame，包含所有特征。
+        # y 是一个 Series，包含目标变量的数据。
+        # categorical_indicator 是一个布尔值列表，指示数据集中的每个特征是否是分类特征（categorical feature）。
+        # attribute_names 是一个字符串列表，每个字符串表示一个特征的名称。
+        X,y,categorical_indicator, attribute_names = \
+        dataset.get_data(dataset_format='dataframe', target=dataset.default_target_attribute)
         
         if isinstance(dataname, int):
             openml_list = openml.datasets.list_datasets(output_format="dataframe")  # returns a dict
@@ -176,35 +185,39 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
         # drop cols which only have one unique value
         drop_cols = [col for col in attribute_names if X[col].nunique()<=1]
 
+        # 把dataframe转化成np.array是为了使用高端的布尔索引功能
         all_cols = np.array(attribute_names)
         categorical_indicator = np.array(categorical_indicator)
         cat_cols = [col for col in all_cols[categorical_indicator] if col not in drop_cols]
         num_cols = [col for col in all_cols[~categorical_indicator] if col not in drop_cols]
         all_cols = [col for col in all_cols if col not in drop_cols]
         
+        # cat_cols包含了所有分类特征的表头名称，其中就有二分类特征，如果有dataset_config那么可以用它再分出二分类特征来
         if dataset_config is not None:
             if 'bin' in dataset_config: bin_cols = [c for c in cat_cols if c in dataset_config['bin']]
+        # 这步操作暂时没有效果
         else: bin_cols = []
         cat_cols = [c for c in cat_cols if c not in bin_cols]
 
-        # encode target label
+        # encode target label（字符串标签 → 数字标签）
         y = LabelEncoder().fit_transform(y.values)
         y = pd.Series(y,index=X.index)
 
     # start processing features
     # process num
     if len(num_cols) > 0:
-        for col in num_cols: X[col].fillna(X[col].mode()[0], inplace=True) #inplace 如果为True，则在原DataFrame上进行操作，返回值为None
+        for col in num_cols: X[col].fillna(X[col].mode()[0], inplace=True) #inplace如果为True，则在原DataFrame上进行操作，返回值为None
         X[num_cols] = MinMaxScaler().fit_transform(X[num_cols])
 
     if len(cat_cols) > 0:
         for col in cat_cols: X[col].fillna(X[col].mode()[0], inplace=True)
         # process cate
-        if encode_cat:
+        if encode_cat: # when don't use transtab
             X[cat_cols] = OrdinalEncoder().fit_transform(X[cat_cols])
-        else:
+        else: # when use transtab
             X[cat_cols] = X[cat_cols].astype(str)
 
+    # process bin
     if len(bin_cols) > 0:
         for col in bin_cols: X[col].fillna(X[col].mode()[0], inplace=True)
         if 'binary_indicator' in dataset_config:
@@ -225,9 +238,10 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
         data_config = dataset_config
         if 'columns' in data_config:
             new_cols = data_config['columns']
+            # X.columns 是取数据的列索引; 此处是使用data_config的new_cols作为X新的列索引。
             X.columns = new_cols
             attribute_names = new_cols
-
+        # 把data_config中各种类型特征的表头保存出来，暂时不知道有什么用
         if 'bin' in data_config:
             bin_cols = data_config['bin']
         
@@ -265,20 +279,26 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
     else:
         # split train/val/test
         train_dataset, test_dataset, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=seed, stratify=y, shuffle=True)
-        val_size = int(len(y)*0.1)
-        val_dataset = train_dataset.iloc[-val_size:]
+        val_size = int(len(y)*0.1) # 验证数据集的大小
+        val_dataset = train_dataset.iloc[-val_size:] # “-val_size”是负索引，表示从数据的末尾倒着往前数
         y_val = y_train[-val_size:]
-        train_dataset = train_dataset.iloc[:-val_size]
+        # 更新训练数据集
+        train_dataset = train_dataset.iloc[:-val_size]# 注意到这里":"跑到前边了，表示从上往下数到倒数第val_size个
         y_train = y_train[:-val_size]
 
+    # data_cut 不为空意思是要用transtab来切分了
     if data_cut is not None:
-        np.random.shuffle(all_cols)
-        sp_size=int(len(all_cols)/data_cut)
-        col_splits = np.split(all_cols, range(0,len(all_cols),sp_size))[1:]
+        np.random.shuffle(all_cols) # 打乱列
+        sp_size=int(len(all_cols)/data_cut) # 要均匀切分所有列，这里计算切完每一份包含几个列
+        # ① range(0,len(all_cols),sp_size) 生成均匀的切割位置的索引
+        # ② np.split(...)[1:] 排除了第一个切分段，第一个分段是从0到0，没有内容，所以丢掉
+        col_splits = np.split(all_cols, range(0,len(all_cols),sp_size))[1:] 
+        # 添加随机列
         new_col_splits = []
         for split in col_splits:
             candidate_cols = np.random.choice(np.setdiff1d(all_cols, split), int(sp_size/2), replace=False)
             new_col_splits.append(split.tolist() + candidate_cols.tolist())
+        # 处理多余的列块？？
         if len(col_splits) > data_cut:
             for i in range(len(col_splits[-1])):
                 new_col_splits[i] += [col_splits[-1][i]]
