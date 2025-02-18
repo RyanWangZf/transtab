@@ -46,17 +46,20 @@ def predict(clf,
     pred_list, loss_list = [], []
     for i in range(0, len(x_test), eval_batch_size):
         bs_x_test = x_test.iloc[i:i+eval_batch_size]
-        bs_y_test = y_test.iloc[i:i+eval_batch_size]
+        bs_y_test = y_test.iloc[i:i+eval_batch_size] if y_test is not None else None
         with torch.no_grad():
             logits, loss = clf(bs_x_test, bs_y_test)
         
         if loss is not None:
             loss_list.append(loss.item())
+            
         if logits.shape[-1] == 1: # binary classification
             pred_list.append(logits.sigmoid().detach().cpu().numpy())
         else: # multi-class classification
             pred_list.append(torch.softmax(logits,-1).detach().cpu().numpy())
+            
     pred_all = np.concatenate(pred_list, 0)
+        
     if logits.shape[-1] == 1:
         pred_all = pred_all.flatten()
 
