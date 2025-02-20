@@ -63,13 +63,9 @@ It's easy, isn't it?
 
 First, download the right ``pytorch`` version following the guide on https://pytorch.org/get-started/locally/.
 
-Then try to install from pypi directly:
+~~Then try to install from pypi directly:~~ [Feb 2025: pypi version is not maintained, please try to install from github instead]
 
-```bash
-pip install transtab
-```
-
-or
+~~or~~
 
 ```bash
 pip install git+https://github.com/RyanWangZf/transtab.git
