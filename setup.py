@@ -13,7 +13,7 @@ with open(os.path.join(this_directory, 'requirements.txt'),
 
 setuptools.setup(
     name = 'transtab',
-    version = '0.0.5',
+    version = '0.0.6',
     author = 'Zifeng Wang',
     author_email = 'zifengw2@illinois.edu',
     description = 'A flexible tabular prediction model that handles variable-column input tables.',
