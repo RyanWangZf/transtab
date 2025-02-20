@@ -6,20 +6,14 @@ torch version and CUDA device you are using:
 
 `PyTorch Installation Instructions <https://pytorch.org/get-started/locally/>`_.
 
-After that, *transtab* can be downloaded directly using **pip**.
-
-.. code-block:: bash
-
-    pip install transtab
-
-or
+After that, *transtab* can be downloaded directly using **pip**. [Feb 2025, the PyPI version is no longer maintained, please try to install it from github]:
 
 .. code-block:: bash
 
     pip install git+https://github.com/RyanWangZf/transtab.git
 
 
-Alternatively, you can clone the project and install from local
+Alternatively, you can clone the project and install it from local
 
 .. code-block:: bash
 
