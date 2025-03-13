@@ -5,16 +5,15 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder, OrdinalEncoder, MinMaxScaler
 from sklearn.model_selection import train_test_split
-import openml
-from loguru import logger
 
-# TODO
-# organize teh dataset_config for the load_data API.
-# dataset_config = {
-# 'dataname': { 'cat':[],'bin':[], 'num':[], 
-# 'cols':[]}
-# }
+try:
+    import openml
+    _has_openml = True
+except ImportError:
+    _has_openml = False
 
+import logging
+logger = logging.getLogger(__name__)
 
 OPENML_DATACONFIG = {
     'credit-g': {'bin': ['own_telephone', 'foreign_worker']},
@@ -156,6 +155,11 @@ def load_single_data(dataname, dataset_config=None, encode_cat=False, data_cut=N
                 num_cols = dataset_config['num']
         
     else:
+        if not _has_openml:
+            raise ImportError(
+                "OpenML is required for this functionality. "
+                "Please install it with: pip install openml"
+            )
         dataset = openml.datasets.get_dataset(dataname)
         X,y,categorical_indicator, attribute_names = dataset.get_data(dataset_format='dataframe', target=dataset.default_target_attribute)
         
