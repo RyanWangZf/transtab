@@ -1,15 +1,15 @@
 import pdb
 import os
 
-from . import constants
-from .modeling_transtab import TransTabClassifier, TransTabRegressor, TransTabFeatureExtractor, TransTabFeatureProcessor
-from .modeling_transtab import TransTabForCL
-from .modeling_transtab import TransTabInputEncoder, TransTabModel
-from .dataset import load_data
-from .evaluator import predict, evaluate
-from .trainer import Trainer
-from .trainer_utils import TransTabCollatorForCL
-from .trainer_utils import random_seed
+from transtab import constants
+from transtab.modeling_transtab import TransTabClassifier, TransTabRegressor, TransTabFeatureExtractor, TransTabFeatureProcessor
+from transtab.modeling_transtab import TransTabForCL
+from transtab.modeling_transtab import TransTabInputEncoder, TransTabModel
+from transtab.dataset import load_data
+from transtab.evaluator import predict, evaluate
+from transtab.trainer import Trainer
+from transtab.trainer_utils import TransTabCollatorForCL
+from transtab.trainer_utils import random_seed
 
 def build_classifier(
     categorical_columns=None,

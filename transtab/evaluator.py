@@ -6,7 +6,7 @@ import torch
 import numpy as np
 from sklearn.metrics import roc_auc_score, accuracy_score, mean_squared_error
 
-from . import constants
+from transtab import constants
 
 def predict(clf, 
     x_test,
@@ -139,7 +139,7 @@ class EarlyStopping:
         self.counter = 0
         self.best_score = None
         self.early_stop = False
-        self.val_loss_min = np.Inf
+        self.val_loss_min = np.inf
         self.delta = delta
         self.path = output_dir
         self.trace_func = trace_func

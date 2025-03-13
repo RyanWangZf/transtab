@@ -4,7 +4,6 @@ import collections
 import json
 from typing import Dict, Optional, Any, Union, Callable, List
 
-from loguru import logger
 from transformers import BertTokenizer, BertTokenizerFast
 import torch
 from torch import nn
@@ -14,7 +13,10 @@ import torch.nn.functional as F
 import numpy as np
 import pandas as pd
 
-from . import constants
+from transtab import constants
+
+import logging
+logger = logging.getLogger(__name__)
 
 class TransTabWordEmbedding(nn.Module):
     r'''

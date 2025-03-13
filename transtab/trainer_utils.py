@@ -16,7 +16,7 @@ from transformers.optimization import (
     get_constant_schedule_with_warmup
 )
 
-from .modeling_transtab import TransTabFeatureExtractor
+from transtab.modeling_transtab import TransTabFeatureExtractor
 
 TYPE_TO_SCHEDULER_FUNCTION = {
     'linear': get_linear_schedule_with_warmup,

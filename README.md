@@ -17,6 +17,8 @@ Paper is available at https://arxiv.org/pdf/2205.09328.pdf.
 5 min blog to understand TransTab at [realsunlab.medium.com](https://realsunlab.medium.com/transtab-learning-transferable-tabular-transformers-across-tables-1e34eec161b8)!
 
 ### News!
+- [03/12/25] Version `0.0.7` with `TransTabRegressor` available for regression. Thanks @yuxinchenNU.
+
 - [05/04/23] Check the version `0.0.5` of `TransTab`!
 
 - [01/04/23] Check the version `0.0.3` of `TransTab`!
@@ -29,9 +31,10 @@ Paper is available at https://arxiv.org/pdf/2205.09328.pdf.
 
 - [x] Table embedding.
 
+- [x] Add regression support.
+
 - [ ] Add support to direct process table with missing values.
 
-- [ ] Add regression support.
 
 ### Features
 This repository provides the python package `transtab` for flexible tabular prediction model. The basic usage of `transtab` can be done in a couple of lines!
