@@ -49,6 +49,9 @@ allset, trainset, valset, testset, cat_cols, num_cols, bin_cols \
 # build classifier
 model = transtab.build_classifier(cat_cols, num_cols, bin_cols)
 
+# build regressor
+# model = transtab.build_regressor(cat_cols, num_cols, bin_cols)
+
 # start training
 transtab.train(model, trainset, valset, **training_arguments)
 
